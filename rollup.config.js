@@ -36,17 +36,8 @@ export default {
 		external(),
 		url(),
 		visualizer(),
-		resolve({
-			browser: true,
-			preferBuiltins: false
-		}),
-		typescript({
-			rollupCommonJSResolveHack: true,
-			clean: true
-		}),
-		commonjs({
-			sourceMap: false,
-			ignoreGlobal: false
-		})
+		commonjs({ sourceMap: false, ignoreGlobal: false }),
+		typescript({ rollupCommonJSResolveHack: true, clean: true }),
+		resolve({ dedupe: true, browser: true, preferBuiltins: false })
 	]
 };

@@ -40,42 +40,44 @@ const initialState: State = {
   isApproved: false
 };
 
+const reducer = {
+  onChangeName: (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    return (): State => ({ name: value });
+  },
+  onChangeNumber: (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    return (): Partial<State> => ({
+      [name as "age" | "points"]: Number.parseFloat(value)
+    });
+  },
+  onChangeCheckbox: (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { checked } = e.target;
+    return (): Partial<State> => ({ isApproved: checked });
+  }
+};
+
 const App = () => {
-  const [state, reducers] = useReducer(initialState as State, {
-    onChangeName: (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { value } = e.target;
-      return (): State => ({ name: value });
-    },
-    onChangeNumber: (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { name, value } = e.target;
-      return (): Partial<State> => ({
-        [name as "age" | "points"]: Number.parseFloat(value)
-      });
-    },
-    onChangeCheckbox: (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { checked } = e.target;
-      return (): Partial<State> => ({ isApproved: checked });
-    }
-  });
+  const [state, actions] = useReducer(initialState as State, reducer);
   return (
     <Fragment>
-      <input name="name" onChange={reducers.onChangeName} value={state.name} />
+      <input name="name" onChange={actions.onChangeName} value={state.name} />
       <input
         type="number"
         name="age"
-        onChange={reducers.onChangeNumber}
+        onChange={actions.onChangeNumber}
         value={state.age}
       />
       <input
         type="number"
         name="points"
-        onChange={reducers.onChangeNumber}
+        onChange={actions.onChangeNumber}
         value={state.points}
       />
       <input
         type="checkbox"
         name="isApproved"
-        onChange={reducers.onChangeCheckbox}
+        onChange={actions.onChangeCheckbox}
         checked={state.isApproved}
       />
     </Fragment>
