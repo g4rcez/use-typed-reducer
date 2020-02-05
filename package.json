@@ -1,0 +1,54 @@
+{
+    "name": "use-typed-reducer",
+    "version": "0.0.1",
+    "description": "use-reducer React hook alternative",
+    "author": "g4rcez",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/g4rcez/use-reducer"
+    },
+    "main": "dist/index.js",
+    "module": "dist/index.es.js",
+    "jsnext:main": "dist/index.es.js",
+    "engines": {
+        "node": ">=8",
+        "npm": ">=5"
+    },
+    "scripts": {
+        "build": "rollup -c",
+        "start": "rollup -c -w",
+        "prepare": "yarn run build"
+    },
+    "peerDependencies": {
+        "react": "^16.8.0"
+    },
+    "devDependencies": {
+        "@rollup/plugin-node-resolve": "^7.1.1",
+        "@rollup/plugin-strip": "^1.3.2",
+        "@rollup/plugin-url": "^4.0.2",
+        "@types/react": "^16.9.17",
+        "@types/react-dom": "^16.9.4",
+        "babel-core": "^6.26.3",
+        "babel-runtime": "^6.26.0",
+        "cross-env": "^7.0.0",
+        "react-scripts-ts": "^3.1.0",
+        "rollup": "^1.31.0",
+        "rollup-plugin-alias": "^2.2.0",
+        "rollup-plugin-babel": "^4.3.3",
+        "rollup-plugin-babel-minify": "^9.1.1",
+        "rollup-plugin-commonjs": "^10.1.0",
+        "rollup-plugin-node-resolve": "^5.2.0",
+        "rollup-plugin-peer-deps-external": "^2.2.2",
+        "rollup-plugin-strip": "^1.2.2",
+        "rollup-plugin-terser": "^5.1.3",
+        "rollup-plugin-typescript2": "^0.25.3",
+        "rollup-plugin-uglify": "^6.0.4",
+        "rollup-plugin-url": "^3.0.1",
+        "rollup-plugin-visualizer": "^3.3.1",
+        "typescript": "^3.7.4"
+    },
+    "files": [
+        "dist"
+    ]
+}
