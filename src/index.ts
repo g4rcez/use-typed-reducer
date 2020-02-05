@@ -1,28 +1,46 @@
-import { useState, useMemo } from "react";
-import { Dispatch } from "./typings";
+import { useMemo, useState } from "react";
+import { Dispatch, OptionalDispatch } from "./typings";
 
-export type Keys<State> = Partial<Readonly<State>>;
+export type PropState<State> = Partial<Pick<Readonly<State>, keyof State>>;
 
-const useReducer = <State, Reducers extends Dispatch<State, Reducers>>(initialState: State, reducers: Reducers) => {
-	const [state, setState] = useState(initialState);
+const useReducer: (<State, Reducers extends Dispatch<State, Reducers>>(
+	state: State,
+	reducers: Reducers,
+	mergeWithPreviousState?: false
+) => [State, Dispatch<State, Reducers>]) &
+	(<State, Reducers extends OptionalDispatch<State, Reducers>>(
+		state: State,
+		reducers: Reducers,
+		mergeWithPreviousState?: true
+	) => [State, OptionalDispatch<State, Reducers>]) = <State, Reducers>(
+	state: State,
+	reducers: Reducers,
+	mergeWithPreviousState: boolean = true
+) => {
+	const [localState, setLocalState] = useState(state);
 	const dispatches = useMemo(
 		() =>
 			Object.entries(reducers).reduce(
-				(acc, [name, dispatch]: [string, any]) => ({
+				(acc, [name, dispatch]) => ({
 					...acc,
-					[name]: (...params: any) => {
+					[name]: (...params: unknown[]) => {
 						const event = dispatch(...params);
-						setState((currentState: State) => ({
-							...currentState,
-							...event(...params)
-						}));
+						setLocalState((currentState: State) => {
+							if (mergeWithPreviousState) {
+								return {
+									...currentState,
+									...event(...params)
+								};
+							}
+							return event(...params);
+						});
 					}
 				}),
-				{} as Dispatch<State, Reducers>
+				{}
 			),
-		[reducers]
+		[reducers, mergeWithPreviousState]
 	);
-	return [state, dispatches] as [State, Dispatch<State, Reducers>];
+	return [localState, dispatches] as never;
 };
 
 export default useReducer;
