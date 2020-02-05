@@ -58,7 +58,9 @@ const reducer = {
 };
 
 const App = () => {
-  const [state, actions] = useReducer(initialState as State, reducer);
+  // if the third argument is true, the previous state will be merged
+  // with the new state. Otherwise, you may return the entire state
+  const [state, actions] = useReducer(initialState, reducer, true);
   return (
     <Fragment>
       <input name="name" onChange={actions.onChangeName} value={state.name} />

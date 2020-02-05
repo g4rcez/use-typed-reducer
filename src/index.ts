@@ -6,16 +6,16 @@ export type PropState<State> = Partial<Pick<Readonly<State>, keyof State>>;
 const useReducer: (<State, Reducers extends Dispatch<State, Reducers>>(
 	state: State,
 	reducers: Reducers,
-	mergeWithPreviousState?: false
+	mergeWithPreviousState: false
 ) => [State, Dispatch<State, Reducers>]) &
 	(<State, Reducers extends OptionalDispatch<State, Reducers>>(
 		state: State,
 		reducers: Reducers,
-		mergeWithPreviousState?: true
+		mergeWithPreviousState: true
 	) => [State, OptionalDispatch<State, Reducers>]) = <State, Reducers>(
 	state: State,
 	reducers: Reducers,
-	mergeWithPreviousState: boolean = true
+	mergeWithPreviousState: boolean = false
 ) => {
 	const [localState, setLocalState] = useState(state);
 	const dispatches = useMemo(
