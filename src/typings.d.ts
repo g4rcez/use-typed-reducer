@@ -3,18 +3,18 @@
  * will be overridden with file-specific definitions by rollup
  */
 
-type Keys<State> = Partial<Readonly<State>>;
+export type PropState<State> = Partial<Readonly<State>>;
 
 type OptionalAct<Actions, State> = {
-	[key in keyof Actions]: (...args: any) => (state: State) => Keys<State>;
+	[key in keyof Actions]: (...args: any) => (state: State) => PropState<State>;
 };
 type Act<Actions, State> = {
 	[key in keyof Actions]: (...args: any) => (state: State) => Readonly<State>;
 };
 
-type OptionalReducer<State, Function extends (...args: any) => (state: State) => Keys<State>> = (
+type OptionalReducer<State, Function extends (...args: any) => (state: State) => PropState<State>> = (
 	...args: Parameters<Function>
-) => (state: State) => Keys<State>;
+) => (state: State) => PropState<State>;
 
 type Reducer<State, Function extends (...args: any) => (state: State) => State> = (
 	...args: Parameters<Function>
