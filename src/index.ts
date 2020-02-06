@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Dispatch, OptionalDispatch } from "./typings";
-
-export type PropState<State> = Partial<Pick<Readonly<State>, keyof State>>;
+export { PropState } from "./typings";
 
 const useReducer: (<State, Reducers extends Dispatch<State, Reducers>>(
 	state: State,
