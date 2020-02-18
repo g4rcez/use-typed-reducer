@@ -22,6 +22,8 @@ With useTypedReducer, you can use your function the way you prefer, it will infe
 
 ## Using
 
+**By default, the third parameter is false**. That means ***previous state is not merge with the new state***, to make this, pass `true` as third parameter.
+
 ```tsx
 import React, { Fragment } from "react";
 import useReducer, { Keys } from "use-typed-reducer";
