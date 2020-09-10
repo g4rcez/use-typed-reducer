@@ -5,12 +5,10 @@
     "trailingComma": "none",
     "arrowParens": "always",
     "endOfLine": "auto",
-    "tabWidth": 4,
-    "useTabs": true,
+    "useTabs": false,
     "printWidth": 120,
     "jsxSingleQuote": false,
     "bracketSpacing": true,
-    "htmlWhitespaceSensitivity": "css",
     "jsxBracketSameLine": false,
     "proseWrap": "preserve"
 }
