@@ -4,7 +4,7 @@ import { Dispatch } from "./typings";
 export const useReducer: <State, Reducers extends Dispatch<State, Reducers>>(
     state: State,
     reducers: Reducers,
-    middlewares: ((state: State) => State)[]
+    middlewares?: ((state: State) => State)[]
 ) => [State, Dispatch<State, Reducers>] = <State, Reducers>(
     state: State,
     reducers: Reducers,
@@ -26,5 +26,4 @@ export const useReducer: <State, Reducers extends Dispatch<State, Reducers>>(
     }, [reducers, middlewares]);
     return [localState, dispatches] as never;
 };
-
 export default useReducer;
