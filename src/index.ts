@@ -3,27 +3,19 @@ import { Dispatch } from "./typings";
 
 export const useReducer: <State, Reducers extends Dispatch<State, Reducers>>(
     state: State,
-    reducers: Reducers,
-    middlewares?: ((state: State) => State)[]
-) => [State, Dispatch<State, Reducers>] = <State, Reducers>(
-    state: State,
-    reducers: Reducers,
-    middlewares: ((state: State) => State)[] = []
-) => {
+    reducers: Reducers
+) => [State, Dispatch<State, Reducers>] = <State, Reducers>(state: State, reducers: Reducers) => {
     const [localState, setLocalState] = useState(state);
     const dispatches = useMemo(() => {
         return Object.entries(reducers).reduce(
             (acc, [name, dispatch]) => ({
                 ...acc,
-                [name]: (...params: unknown[]) =>
-                    setLocalState((st: State) => {
-                        const newSt = dispatch(...params)(st);
-                        return middlewares.reduce((acc, el) => el(acc), newSt);
-                    })
+                [name]: (...params: unknown[]) => setLocalState((st: State) => dispatch(...params)(st))
             }),
             reducers
         );
-    }, [reducers, middlewares]);
+    }, [reducers]);
     return [localState, dispatches] as never;
 };
 export default useReducer;
+export * from "./typings";
