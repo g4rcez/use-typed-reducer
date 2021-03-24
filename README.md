@@ -28,7 +28,7 @@ With useTypedReducer, you can use your function the way you prefer, it will infe
 `useTypedReducer` receive the initialState and dictionary/object with all reducers and return tuple with state and dispatch. Dispatch has the same key and functions of given dictionary in `useTypedReducer`, but return a new function to update state. This void `dispatch({ type: "ACTION" })`
 
 ```tsx
-import { useTypedReducer, UseReducer } from "use-typed-reducer";
+import { useTypedReducer, UseReducer } from "./index";
 
 const initialState = {
     numbers: 0,
@@ -38,16 +38,18 @@ const initialState = {
 type State = typeof initialState;
 
 type Reducers = {
-    reset: UseReducer.Reducer<State, (n: number) => any>;
+    reset: UseReducer.Reducer<State, () => any>;
+    onChange: UseReducer.Reducer<State, (e: React.ChangeEvent<HTMLInputElement>) => any>;
+    increment: UseReducer.Reducer<State, () => any>;
 };
 
 const reducers: Reducers = {
-    increment: () => (state) => ({ ...state, numbers: n + 1 }),
-    onChange: (e: React.ChangeEvent<HtmlInputElement>) => {
+    increment: () => (state) => ({ ...state, numbers: state.numbers + 1 }),
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.valueAsNumber
-        return (state) => ({ ...state, numbers: e })
+        return (state) => ({ ...state, numbers: value })
     },
-    reset: () => () => ({ ...state, numbers: 0 })
+    reset: () => (state) => ({ ...state, numbers: 0 })
 };
 
 
@@ -59,7 +61,7 @@ const Component = () => {
             <button onClick={dispatch.increment}>+Increment</button>
             <input onChange={dispatch.onChange} value={state.numbers} />
             <button onClick={dispatch.reset}>Reset</button>
-        </input>
+        </>
     )
 }
 ```
