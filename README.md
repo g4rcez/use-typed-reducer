@@ -22,70 +22,44 @@ With useTypedReducer, you can use your function the way you prefer, it will infe
 
 ## Using
 
-**By default, the third parameter is false**. That means ***previous state is not merge with the new state***, to make this, pass `true` as third parameter.
+### useReducer (default import) or `useTypedReducer`
+
+
+`useTypedReducer` receive the initialState and dictionary/object with all reducers and return tuple with state and dispatch. Dispatch has the same key and functions of given dictionary in `useTypedReducer`, but return a new function to update state. This void `dispatch({ type: "ACTION" })`
 
 ```tsx
-import React, { Fragment } from "react";
-import useReducer, { Keys } from "use-typed-reducer";
+import { useTypedReducer, UseReducer } from "use-typed-reducer";
 
-type State = Keys<{
-  name: string;
-  age: number;
-  points: number;
-  isApproved: boolean;
-}>;
+const initialState = {
+    numbers: 0,
+    something: ""
+}
 
-const initialState: State = {
-  name: "",
-  age: 0,
-  points: 0,
-  isApproved: false
+type State = typeof initialState;
+
+type Reducers = {
+    reset: UseReducer.Reducer<State, (n: number) => any>;
 };
 
-const reducer = {
-  onChangeName: (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
-    return (): State => ({ name: value });
-  },
-  onChangeNumber: (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    return (): Partial<State> => ({
-      [name as "age" | "points"]: Number.parseFloat(value)
-    });
-  },
-  onChangeCheckbox: (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { checked } = e.target;
-    return (): Partial<State> => ({ isApproved: checked });
-  }
+const reducers: Reducers = {
+    increment: () => (state) => ({ ...state, numbers: n + 1 }),
+    onChange: (e: React.ChangeEvent<HtmlInputElement>) => {
+        const value = e.target.valueAsNumber
+        return (state) => ({ ...state, numbers: e })
+    },
+    reset: () => () => ({ ...state, numbers: 0 })
 };
 
-const App = () => {
-  // if the third argument is true, the previous state will be merged
-  // with the new state. Otherwise, you may return the entire state
-  const [state, actions] = useReducer(initialState, reducer, true);
-  return (
-    <Fragment>
-      <input name="name" onChange={actions.onChangeName} value={state.name} />
-      <input
-        type="number"
-        name="age"
-        onChange={actions.onChangeNumber}
-        value={state.age}
-      />
-      <input
-        type="number"
-        name="points"
-        onChange={actions.onChangeNumber}
-        value={state.points}
-      />
-      <input
-        type="checkbox"
-        name="isApproved"
-        onChange={actions.onChangeCheckbox}
-        checked={state.isApproved}
-      />
-    </Fragment>
-  );
-};
+
+const Component = () => {
+    const [state, dispatch] = useTypedReducer(initialState, reducers)
+
+    return (
+        <>
+            <button onClick={dispatch.increment}>+Increment</button>
+            <input onChange={dispatch.onChange} value={state.numbers} />
+            <button onClick={dispatch.reset}>Reset</button>
+        </input>
+    )
+}
 ```
-
