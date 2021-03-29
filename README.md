@@ -65,3 +65,56 @@ const Component = () => {
     )
 }
 ```
+
+
+### useReducerWithProps
+
+The same of useTypedReducer, but receive a `getProps` as second argument in the second function.
+
+
+```typescript
+import { useReducerWithProps, UseReducer } from "./index";
+
+const initialState = {
+    numbers: 0,
+    something: ""
+}
+
+type State = typeof initialState;
+
+type Reducers = {
+    reset: UseReducer.Reducer<State, () => any>;
+    onChange: UseReducer.Reducer<State, (e: React.ChangeEvent<HTMLInputElement>) => any>;
+    increment: UseReducer.Reducer<State, () => any>;
+};
+
+type Props = {
+    list: number[];
+}
+
+const reducers: Reducers = {
+    increment: () => (state) => ({ ...state, numbers: state.numbers + 1 }),
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.valueAsNumber;
+        return (state, getProps) => {
+            const { list } = getProps();
+            const find = list.find(x => x === value);
+            return find === undefined ? ({ ...state, numbers: value }): ({ ...state, numbers: find * 2 });
+        }
+    },
+    reset: () => (state) => ({ ...state, numbers: 0 })
+};
+
+
+const Component = (props: Props) => {
+    const [state, dispatch] = useReducerWithProps(initialState, props, reducers)
+
+    return (
+        <>
+            <button onClick={dispatch.increment}>+Increment</button>
+            <input onChange={dispatch.onChange} value={state.numbers} />
+            <button onClick={dispatch.reset}>Reset</button>
+        </>
+    )
+}
+```
