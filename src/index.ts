@@ -10,29 +10,25 @@ export type Dispatch<ST, Fns extends Actions<Fns, ST>> = {
     [R in keyof Fns]: (...args: unknown[]) => Promise<(state: ST) => ST> | ((state: ST) => ST);
 };
 
-type ActionPropState<S, P> = (
-    ...args: any
-) => Promise<(state: S, getProps: () => P) => S> | ((state: S, getProps: () => P) => S);
+type ActionPropState<S, P> = (...args: any) => Promise<(state: S, props: P) => S> | ((state: S, props: P) => S);
 
 type ActionPropsState<A, S, P> = {
     [K in keyof A]: ActionPropState<S, P>;
 };
 
 type DispatchProps<ST extends object, P, Reducers extends ActionPropsState<Reducers, ST, P>> = {
-    [K in keyof Reducers]: (
-        ...args: unknown[]
-    ) => Promise<(state: ST, getProps: () => P) => ST> | ((state: ST, getProps: () => P) => ST);
+    [K in keyof Reducers]: (...args: unknown[]) => Promise<(state: ST, props: P) => ST> | ((state: ST, props: P) => ST);
 };
 
 type DefaultReducer<S extends object> = (state: S) => S;
 
-type WithProps<S extends object, P> = (state: S, getProps: () => P) => S;
+type WithProps<S extends object, P> = (state: S, props: P) => S;
 
 export type Reducer<S extends object, A extends (...args: any) => DefaultReducer<S>> = (
     ...params: Parameters<A>
 ) => DefaultReducer<S>;
 
-export type WithPropsReducer<S extends object, P extends object, A extends (...args: any) => WithProps<S, P>> = (
+export type ReducerWithProps<S extends object, P extends object, A extends (...args: any) => WithProps<S, P>> = (
     ...params: Parameters<A>
 ) => WithProps<S, P>;
 
@@ -52,8 +48,8 @@ export const useTypedReducer = <State extends object, Reducers extends Dispatch<
             (acc, [name, dispatch]) => ({
                 ...acc,
                 [name]: async (...params: unknown[]) => {
-                    const result = await dispatch(...params);
-                    setState((st: State) => result(st));
+                    const dispatcher = await dispatch(...params);
+                    setState((previousState: State) => dispatcher(previousState));
                 }
             }),
             reducers
@@ -72,22 +68,25 @@ export const useReducerWithProps = <
     reducers: Reducers
 ): [state: State, dispatch: Reducers] => {
     const [state, setState] = useState(initialState);
-    const getProps = useRef<() => Props>(() => props);
+    const refProps = useRef<Props>(props);
+
     useEffect(() => {
-        getProps.current = () => props;
+        refProps.current = props;
     }, [props]);
+
     const dispatches = useMemo(() => {
         return entries<Reducers, ActionPropState<State, Props>>(reducers).reduce(
             (acc, [name, dispatch]) => ({
                 ...acc,
                 [name]: async (...params: unknown[]) => {
-                    const result = await dispatch(...params);
-                    setState((st: State) => result(st, getProps.current));
+                    const dispatcher = await dispatch(...params);
+                    setState((previousState: State) => dispatcher(previousState, refProps.current));
                 }
             }),
             reducers
         );
     }, [reducers]);
+
     return [state, dispatches];
 };
 

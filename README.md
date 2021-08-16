@@ -1,6 +1,6 @@
 # use-typed-reducer
 
-Another way to use [useReducer](https://reactjs.org/docs/hooks-reference.html#usereducer) hook
+Another way to use [useReducer](https://reactjs.org/docs/hooks-reference.html#usereducer) hook, with strongly type rules defined by you
 
 ## Install
 
@@ -96,9 +96,8 @@ const reducers: Reducers = {
     increment: () => (state) => ({ ...state, numbers: state.numbers + 1 }),
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.valueAsNumber;
-        return (state, getProps) => {
-            const { list } = getProps();
-            const find = list.find(x => x === value);
+        return (state, props) => {
+            const find = props.list.find(x => x === value);
             return find === undefined ? ({ ...state, numbers: value }): ({ ...state, numbers: find * 2 });
         }
     },
