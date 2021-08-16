@@ -7,7 +7,7 @@ type Actions<Actions, State> = {
 };
 
 export type Dispatch<ST, Fns extends Actions<Fns, ST>> = {
-    [R in keyof Fns]: (...args: unknown[]) => Promise<(state: ST) => ST> | ((state: ST) => ST);
+    [R in keyof Fns]: (...args: any[]) => Promise<(state: ST) => ST> | ((state: ST) => ST);
 };
 
 type ActionPropState<S, P> = (...args: any) => Promise<(state: S, props: P) => S> | ((state: S, props: P) => S);
@@ -17,7 +17,7 @@ type ActionPropsState<A, S, P> = {
 };
 
 type DispatchProps<ST extends object, P, Reducers extends ActionPropsState<Reducers, ST, P>> = {
-    [K in keyof Reducers]: (...args: unknown[]) => Promise<(state: ST, props: P) => ST> | ((state: ST, props: P) => ST);
+    [K in keyof Reducers]: (...args: any[]) => Promise<(state: ST, props: P) => ST> | ((state: ST, props: P) => ST);
 };
 
 type DefaultReducer<S extends object> = (state: S) => S;
