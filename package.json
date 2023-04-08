@@ -32,6 +32,7 @@
         "babel-core": "6.26.3",
         "babel-runtime": "6.26.0",
         "cross-env": "7.0.0",
+        "prettier": "2.8.7",
         "react-scripts-ts": "3.1.0",
         "rollup": "2.26.11",
         "rollup-plugin-alias": "2.2.0",
