@@ -17,8 +17,7 @@
     },
     "scripts": {
         "build": "rollup -c",
-        "start": "rollup -c -w",
-        "prepare": "yarn run build"
+        "start": "rollup -c -w"
     },
     "peerDependencies": {
         "react": ">= 16.8.3"

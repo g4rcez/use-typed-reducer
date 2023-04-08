@@ -24,7 +24,6 @@ With useTypedReducer, you can use your function the way you prefer, it will infe
 
 ### useReducer (default import) or `useTypedReducer`
 
-
 `useTypedReducer` receive the initialState and dictionary/object with all reducers and return tuple with state and dispatch. Dispatch has the same key and functions of given dictionary in `useTypedReducer`, but return a new function to update state. This void `dispatch({ type: "ACTION" })`
 
 ```tsx
@@ -72,48 +71,58 @@ const Component = () => {
 The same of useTypedReducer, but receive a `getProps` as second argument in the second function.
 
 
-```typescript
+```typescript jsx
 import { useReducerWithProps, UseReducer } from "./index";
 
-const initialState = {
-    numbers: 0,
-    something: ""
-}
+const initialState = { numbers: 0, something: "" };
 
 type State = typeof initialState;
 
 type Reducers = {
-    reset: UseReducer.Reducer<State, () => any>;
-    onChange: UseReducer.Reducer<State, (e: React.ChangeEvent<HTMLInputElement>) => any>;
-    increment: UseReducer.Reducer<State, () => any>;
+  reset: UseReducer.Reducer<State, () => any>;
+  onChange: UseReducer.Reducer<State, (e: React.ChangeEvent<HTMLInputElement>) => any>;
+  increment: UseReducer.Reducer<State, () => any>;
 };
 
 type Props = {
-    list: number[];
+  list: number[];
 }
 
 const reducers: Reducers = {
-    increment: () => (state) => ({ ...state, numbers: state.numbers + 1 }),
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.valueAsNumber;
-        return (state, props) => {
-            const find = props.list.find(x => x === value);
-            return find === undefined ? ({ ...state, numbers: value }): ({ ...state, numbers: find * 2 });
-        }
-    },
-    reset: () => (state) => ({ ...state, numbers: 0 })
+  increment: () => (state) => ({ ...state, numbers: state.numbers + 1 }),
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.valueAsNumber;
+    return (state, props) => {
+      const find = props.list.find(x => x === value);
+      return find === undefined ? ({ ...state, numbers: value }) : ({ ...state, numbers: find * 2 });
+    };
+  },
+  reset: () => (state) => ({ ...state, numbers: 0 })
 };
 
 
 const Component = (props: Props) => {
-    const [state, dispatch] = useReducerWithProps(initialState, props, reducers)
+  const [state, dispatch] = useReducerWithProps(initialState, props, reducers);
 
-    return (
-        <>
-            <button onClick={dispatch.increment}>+Increment</button>
-            <input onChange={dispatch.onChange} value={state.numbers} />
-            <button onClick={dispatch.reset}>Reset</button>
-        </>
-    )
-}
+  return (
+    <Fragment>
+      <button onClick={dispatch.increment}>+Increment</button>
+      <input onChange={dispatch.onChange} value={state.numbers} />
+      <button onClick={dispatch.reset}>Reset</button>
+    </Fragment>
+  );
+};
+```
+
+## useReducer
+
+This is the new way to control your state, but with the old way of use-typed-reducer. Now you have a function to getState and a function to get the props. With this you can avoid to take a function that return a function to update state.
+
+```typescript
+export const useMath = () => {
+  return useReducer({ count: 0 }, (getState) => ({
+    sum: (n: number) => ({ count: n + getState().count }),
+    diff: (n: number) => ({ count: n - getState().count })
+  }));
+};
 ```
