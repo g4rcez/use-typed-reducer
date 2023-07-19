@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+type VoidableFn<Fn extends (...any: any[]) => any> = ReturnType<Fn> extends Promise<any>
+    ? (...a: Parameters<Fn>) => Promise<void>
+    : (...a: Parameters<Fn>) => void;
+
 type Action<State> = (...args: any) => Promise<(state: State) => State> | ((state: State) => State);
 
 type Actions<Actions, State> = { [key in keyof Actions]: Action<State> };
@@ -32,23 +36,29 @@ type MapArray<T, F> = { [K in keyof T]: [K, F] };
 
 const entries = <T extends {}, F>(t: T): MapArray<T[], F> => Object.entries(t) as any;
 
+type RemoveReduceReturns<State extends {}, Reducers extends Dispatch<State, Reducers>> = {
+    [R in keyof Reducers]: VoidableFn<Reducers[R]>;
+};
+
 export const useTypedReducer = <State extends {}, Reducers extends Dispatch<State, Reducers>>(
     initialState: State,
     reducers: Reducers
-): [state: State, dispatch: Reducers] => {
+): [state: State, dispatch: RemoveReduceReturns<State, Reducers>] => {
     const [state, setState] = useState(initialState);
-    const dispatches = useMemo(() => {
-        return entries<Reducers, Action<State>>(reducers).reduce(
-            (acc, [name, dispatch]) => ({
-                ...acc,
-                [name]: async (...params: unknown[]) => {
-                    const dispatcher = await dispatch(...params);
-                    setState((previousState: State) => dispatcher(previousState));
-                }
-            }),
-            reducers
-        );
-    }, [reducers]);
+    const dispatches = useMemo<any>(
+        () =>
+            entries<Reducers, Action<State>>(reducers).reduce(
+                (acc, [name, dispatch]) => ({
+                    ...acc,
+                    [name]: async (...params: unknown[]) => {
+                        const dispatcher = await dispatch(...params);
+                        setState((previousState: State) => dispatcher(previousState));
+                    }
+                }),
+                reducers
+            ),
+        [reducers]
+    );
     return [state, dispatches];
 };
 
@@ -90,6 +100,10 @@ type MappedReducers<State extends {}, Fns extends FnMap<State>> = {
     [F in keyof Fns]: (...args: Parameters<Fns[F]>) => State | Promise<State>;
 };
 
+type MapReducerReturn<State extends {}, Fns extends FnMap<State>> = {
+    [F in keyof Fns]: VoidableFn<Fns[F]>;
+};
+
 const useMutable = <T extends {}>(state: T) => {
     const mutable = useRef(state ?? {});
     useEffect(() => void (mutable.current = state), [state]);
@@ -104,7 +118,7 @@ export const useReducer = <
     initialState: State,
     reducer: Reducers,
     props?: Props
-): [state: State, dispatchers: MappedReducers<State, ReturnType<Reducers>>] => {
+): [state: State, dispatchers: MapReducerReturn<State, ReturnType<Reducers>>] => {
     const [state, setState] = useState<State>(() => initialState);
     const mutableState = useMutable(state);
     const mutableProps = useMutable(props ?? {});
@@ -117,9 +131,11 @@ export const useReducer = <
         return entries<string, Function>(reducers as any).reduce(
             (acc, [name, dispatch]) => ({
                 ...acc,
-                [name]: async (...params: unknown[]) => {
-                    const newState = await dispatch(...params);
-                    setState((previousState: State) => ({ ...previousState, ...newState }));
+                [name]: (...params: unknown[]) => {
+                    const newState = dispatch(...params);
+                    return newState instanceof Promise
+                        ? newState.then((state) => void setState((prev) => ({ ...prev, ...state })))
+                        : setState((previousState: State) => ({ ...previousState, ...newState }));
                 }
             }),
             reducers

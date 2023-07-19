@@ -17,7 +17,8 @@
     },
     "scripts": {
         "build": "rollup -c",
-        "start": "rollup -c -w"
+        "start": "rollup -c -w",
+        "test": "vitest run"
     },
     "peerDependencies": {
         "react": ">= 16.8.3"
@@ -26,12 +27,18 @@
         "@rollup/plugin-node-resolve": "9.0.0",
         "@rollup/plugin-strip": "2.0.0",
         "@rollup/plugin-url": "5.0.1",
+        "@testing-library/jest-dom": "5.17.0",
+        "@testing-library/react": "14.0.0",
         "@types/react": "16.9.19",
         "@types/react-dom": "16.9.4",
+        "@vitejs/plugin-react": "4.0.3",
         "babel-core": "6.26.3",
         "babel-runtime": "6.26.0",
         "cross-env": "7.0.0",
-        "prettier": "2.8.7",
+        "jsdom": "22.1.0",
+        "prettier": "3.0.0",
+        "react": "18.2.0",
+        "react-dom": "18.2.0",
         "react-scripts-ts": "3.1.0",
         "rollup": "2.26.11",
         "rollup-plugin-alias": "2.2.0",
@@ -46,7 +53,9 @@
         "rollup-plugin-url": "3.0.1",
         "rollup-plugin-visualizer": "4.1.1",
         "tslib": "2.0.1",
-        "typescript": "4.0.2"
+        "typescript": "4.0.2",
+        "vite": "4.4.4",
+        "vitest": "0.33.0"
     },
     "files": [
         "dist"
