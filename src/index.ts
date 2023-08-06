@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 
 type VoidableFn<Fn extends (...any: any[]) => any> = ReturnType<Fn> extends Promise<any>
     ? (...a: Parameters<Fn>) => Promise<void>
@@ -45,53 +45,72 @@ export const useTypedReducer = <State extends {}, Reducers extends Dispatch<Stat
 type FnMap<State> = { [k: string]: (...args: any[]) => Partial<State> | Promise<Partial<State>> };
 
 type MappedReducers<State extends {}, Fns extends FnMap<State>> = {
-    [F in keyof Fns]: (
-        ...args: Parameters<Fns[F]>
-    ) => State | Promise<State> | Partial<State> | Promise<Partial<State>>;
+    [F in keyof Fns]: (...args: Parameters<Fns[F]>) => Promise<Partial<State>> | Partial<State>;
 };
 
 type MapReducerReturn<State extends {}, Fns extends FnMap<State>> = { [F in keyof Fns]: VoidableFn<Fns[F]> };
 
-export const useMutable = <T extends {}>(state: T) => {
+export const useMutable = <T extends {}>(state: T): MutableRefObject<T> => {
     const mutable = useRef(state ?? {});
     useEffect(() => void (mutable.current = state), [state]);
     return mutable;
 };
 
+export const dispatchCallback = <Prev extends any, T extends Prev | ((prev: Prev) => Prev)>(prev: Prev, setter: T) =>
+    typeof setter === "function" ? setter(prev) : setter;
+
+export type DispatchCallback<T extends any> = T | ((prev: T) => T);
+
 export const useReducer = <
     State extends {},
-    Reducers extends (getState: () => State, getProps: () => Props) => MappedReducers<State, FnMap<State>>,
-    Props extends {}
+    Reducers extends (
+        getState: () => State,
+        getProps: () => Props,
+        initialState: State
+    ) => MappedReducers<State, FnMap<State>>,
+    Props extends {},
+    Middlewares extends Array<(state: State, key: keyof ReturnType<Reducers>) => State>
 >(
     initialState: State,
     reducer: Reducers,
-    props?: Props
-): [state: State, dispatchers: MapReducerReturn<State, ReturnType<Reducers>>] => {
+    props?: Props,
+    middlewares?: Middlewares
+): Readonly<[state: State, dispatchers: MapReducerReturn<State, ReturnType<Reducers>>]> => {
     const [state, setState] = useState<State>(() => initialState);
     const mutableState = useMutable(state);
     const mutableProps = useMutable(props ?? {});
     const mutableReducer = useMutable(reducer);
+    const middleware = useMutable<Middlewares>(middlewares ?? ([] as unknown as Middlewares));
+    const savedInitialState = useRef(initialState);
 
-    const dispatchers = useMemo(() => {
+    const dispatchers = useMemo<MapReducerReturn<State, ReturnType<Reducers>>>(() => {
         const reducers = mutableReducer.current(
             () => mutableState.current,
-            () => (mutableProps.current as Props) ?? ({} as Props)
+            () => (mutableProps.current as Props) ?? ({} as Props),
+            savedInitialState.current
         );
-        return entries<string, Function>(reducers as any).reduce(
+
+        return entries<string, any>(reducers as any).reduce(
             (acc, [name, dispatch]) => ({
                 ...acc,
-                [name]: (...params: unknown[]) => {
-                    const newState = dispatch(...params);
-                    return newState instanceof Promise
-                        ? void newState.then((state) => void setState((prev) => ({ ...prev, ...state })))
-                        : setState((prev) => ({ ...prev, ...newState }));
+                [name]: (...params: unknown[]): Promise<void> | void => {
+                    const st = dispatch(...params);
+                    return st instanceof Promise
+                        ? void st.then((state) =>
+                              setState((prev) =>
+                                  middleware.current.reduce<State>((acc, fn) => fn(acc, name), { ...prev, state })
+                              )
+                          )
+                        : setState((prev) =>
+                              middleware.current.reduce<State>((acc, fn) => fn(acc, name), { ...prev, ...st })
+                          );
                 }
             }),
-            reducers
+            {} as MapReducerReturn<State, ReturnType<Reducers>>
         );
-    }, []);
+    }, [mutableProps, mutableReducer, mutableState]);
 
-    return [state, dispatchers as any];
+    return [state, dispatchers] as const;
 };
 
 export default useTypedReducer;
