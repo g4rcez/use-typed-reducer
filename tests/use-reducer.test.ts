@@ -28,10 +28,10 @@ describe("Should test useReducer", () => {
         });
         const { result, rerender } = renderHook(() => useReducer({ sleep: "Wake up!" }, reducer));
         expect(result.current[0].sleep).toBe("Wake up!");
-        await act(() => {
+        act(() => {
             result.current[1].sleep(1000);
         });
-        await rerender();
+        rerender();
         expect(result.current[0].sleep).toBe("Sleep for 1000ms");
     });
 });
