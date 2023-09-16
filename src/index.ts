@@ -64,7 +64,11 @@ export type DispatchCallback<T extends any> = T | ((prev: T) => T);
 export const useReducer = <
     State extends {},
     Reducers extends (
-        getState: () => State,
+        getState: (() => State) & {
+            getState: () => State;
+            getProps: () => Props;
+            initialState: State;
+        },
         getProps: () => Props,
         initialState: State
     ) => MappedReducers<State, FnMap<State>>,
@@ -85,7 +89,11 @@ export const useReducer = <
 
     const dispatchers = useMemo<MapReducerReturn<State, ReturnType<Reducers>>>(() => {
         const reducers = mutableReducer.current(
-            () => mutableState.current,
+            Object.assign(() => mutableState.current, {
+                getState: () => mutableState.current,
+                getProps: () => mutableProps.current,
+                initialState: () => savedInitialState.current,
+            }) as any,
             () => (mutableProps.current as Props) ?? ({} as Props),
             savedInitialState.current
         );
