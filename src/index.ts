@@ -92,8 +92,8 @@ export const useReducer = <
             Object.assign(() => mutableState.current, {
                 getState: () => mutableState.current,
                 getProps: () => mutableProps.current,
-                initialState: () => savedInitialState.current,
-            }) as any,
+                initialState: savedInitialState.current
+            }) as never,
             () => (mutableProps.current as Props) ?? ({} as Props),
             savedInitialState.current
         );
