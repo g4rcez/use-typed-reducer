@@ -1,23 +1,41 @@
 {
     "name": "use-typed-reducer",
+    "type": "module",
     "version": "3.3.0",
     "description": "use-reducer React hook alternative",
     "author": "g4rcez",
     "license": "MIT",
+    "source": "./src/index.ts",
+    "types": "./dist/index.d.ts",
+    "main": "./dist/index.js",
+    "module": "./dist/index.cjs",
+    "jsnext:main": "dist/index.es.js",
     "repository": {
         "type": "git",
         "url": "https://github.com/g4rcez/use-reducer"
     },
-    "main": "dist/index.js",
-    "module": "dist/index.es.js",
-    "jsnext:main": "dist/index.es.js",
+    "exports": {
+        ".": {
+            "default": {
+                "type": "./dist/index.d.ts",
+                "import": "./dist/index.cjs",
+                "default": "./dist/index.js",
+                "require": "./dist/index.cjs"
+            },
+            "types": {
+                "import": "./dist/index.d.ts",
+                "require": "./dist/index.d.ts",
+                "default": "./dist/index.d.ts"
+            }
+        }
+    },
     "engines": {
         "node": ">=8",
         "npm": ">=5"
     },
     "scripts": {
-        "build": "rollup -c",
-        "start": "rollup -c -w",
+        "build": "vite build; tsc",
+        "dev": "vite build --watch",
         "test": "vitest run"
     },
     "dependencies": {
@@ -27,9 +45,6 @@
         "react": ">= 16.8.3"
     },
     "devDependencies": {
-        "@rollup/plugin-node-resolve": "9.0.0",
-        "@rollup/plugin-strip": "2.0.0",
-        "@rollup/plugin-url": "5.0.1",
         "@testing-library/jest-dom": "5.17.0",
         "@testing-library/react": "14.0.0",
         "@types/react": "16.9.19",
@@ -43,22 +58,9 @@
         "prettier": "3.0.0",
         "react": "18.2.0",
         "react-dom": "18.2.0",
-        "react-scripts-ts": "3.1.0",
-        "rollup": "2.26.11",
-        "rollup-plugin-alias": "2.2.0",
-        "rollup-plugin-babel": "4.3.3",
-        "rollup-plugin-commonjs": "10.1.0",
-        "rollup-plugin-node-resolve": "5.2.0",
-        "rollup-plugin-peer-deps-external": "2.2.2",
-        "rollup-plugin-strip": "1.2.2",
-        "rollup-plugin-terser": "7.0.2",
-        "rollup-plugin-typescript2": "0.27.2",
-        "rollup-plugin-uglify": "6.0.4",
-        "rollup-plugin-url": "3.0.1",
-        "rollup-plugin-visualizer": "4.1.1",
         "typescript": "4.0.2",
-        "vite": "4.4.4",
-        "vitest": "0.33.0"
+        "vite": "4.4.9",
+        "vitest": "0.34.5"
     },
     "files": [
         "dist"

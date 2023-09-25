@@ -1,37 +1,40 @@
 {
     "compilerOptions": {
-        "outDir": "build",
-        "module": "ESNext",
-        "alwaysStrict": true,
-        "allowSyntheticDefaultImports": true,
-        "downlevelIteration": true,
-        "target": "ES5",
-        "sourceMap": true,
+        "allowJs": false,
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
+        "allowUmdGlobalAccess": false,
+        "target": "ES2015",
         "declaration": true,
-        "moduleResolution": "node",
+        "declarationMap": true,
+        "importHelpers": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
         "forceConsistentCasingInFileNames": true,
-        "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "noImplicitAny": true,
+        "noFallthroughCasesInSwitch": true,
+        "module": "esnext",
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "jsx": "react-jsx",
+        "emitDeclarationOnly": true,
+        "declarationDir": "./dist",
         "strictNullChecks": true,
-        "incremental": true,
         "strictFunctionTypes": true,
-        "suppressImplicitAnyIndexErrors": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
+        "strictBindCallApply": true,
+        "strictPropertyInitialization": true,
+        "alwaysStrict": true,
+        "noImplicitAny": true,
+        "downlevelIteration": true,
         "lib": [
             "dom",
+            "dom.iterable",
             "esnext"
         ]
     },
     "include": [
         "src"
-    ],
-    "exclude": [
-        "node_modules",
-        "build",
-        "dist",
-        "example",
-        "rollup.config.js"
     ]
 }
