@@ -126,3 +126,45 @@ export const useMath = () => {
   }));
 };
 ```
+
+## createGlobalReducer
+
+If you need a way to create a global state, you can use this function. This enables you to create a global state without a Context provider. The API is the same API of `useReducer`, but returns a hook to use the global context.
+
+```typescript jsx
+const useStore = createGlobalReducer({ count: 0 }, (arg) => ({
+    increment: () => ({ count: arg.state().count + 1 }),
+    decrement: () => ({ count: arg.state().count - 1 }),
+}));
+
+export default function App() {
+    const [state, dispatch] = useStore();
+    return (
+        <div>
+            <button onClick={dispatch.increment}>Increment</button>
+            <button onClick={dispatch.decrement}>Decrement</button>
+            <p>{state.count}</p>
+        </div>
+    );
+}
+```
+
+You can pass a selector to `useStore` to get only the part of state that you need. This will optimize your components render, doing the re-render only when the selector get a different value from the previous state.
+
+```typescript jsx
+const useStore = createGlobalReducer({ count: 0 }, (arg) => ({
+    increment: () => ({ count: arg.state().count + 1 }),
+    decrement: () => ({ count: arg.state().count - 1 }),
+}));
+
+export default function App() {
+    const [count] = useStore(state => state.count);
+    return (
+        <div>
+            <button onClick={dispatch.increment}>Increment</button>
+            <button onClick={dispatch.decrement}>Decrement</button>
+            <p>{count}</p>
+        </div>
+    );
+}
+```

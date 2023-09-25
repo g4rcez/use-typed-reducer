@@ -3,22 +3,22 @@ import sync from "use-sync-external-store/with-selector";
 
 type Listener<State> = (state: State, previous: State) => void;
 
-type VoidableFn<Fn extends (...any: any[]) => any> = ReturnType<Fn> extends Promise<any>
+type PromiseBox<T> = T | Promise<T>;
+
+type VoidFn<Fn extends (...any: any[]) => any> = ReturnType<Fn> extends Promise<any>
     ? (...a: Parameters<Fn>) => Promise<void>
     : (...a: Parameters<Fn>) => void;
 
-type Action<State> = (...args: any) => Promise<(state: State) => State> | ((state: State) => State);
+type Action<State> = (...args: any) => PromiseBox<(state: State) => State>;
 
-type Actions<Actions, State> = { [key in keyof Actions]: Action<State> };
-
-export type Dispatch<ST, Fns extends Actions<Fns, ST>> = {
-    [R in keyof Fns]: (...args: any[]) => Promise<(state: ST) => ST> | ((state: ST) => ST);
+export type Dispatch<State, Fns extends { [key in keyof Fns]: Action<State> }> = {
+    [R in keyof Fns]: (...args: any[]) => PromiseBox<(state: State) => State>;
 };
 
 type MapArray<T, F> = { [K in keyof T]: [K, F] };
 
 type MapReducers<State extends {}, Reducers extends Dispatch<State, Reducers>> = {
-    [R in keyof Reducers]: VoidableFn<Reducers[R]>;
+    [R in keyof Reducers]: VoidFn<Reducers[R]>;
 };
 
 type ReducerArgs<State extends {}, Props extends object> = {
@@ -27,13 +27,13 @@ type ReducerArgs<State extends {}, Props extends object> = {
     initialState: State;
 };
 
-type FnMap<State> = { [k: string]: (...args: any[]) => Partial<State> | Promise<Partial<State>> };
+type FnMap<State> = { [k: string]: (...args: any[]) => PromiseBox<Partial<State>> };
 
 type MappedReducers<State extends {}, Fns extends FnMap<State>> = {
-    [F in keyof Fns]: (...args: Parameters<Fns[F]>) => Promise<Partial<State>> | Partial<State>;
+    [F in keyof Fns]: (...args: Parameters<Fns[F]>) => PromiseBox<Partial<State>>;
 };
 
-type MapReducerReturn<State extends {}, Fns extends FnMap<State>> = { [F in keyof Fns]: VoidableFn<Fns[F]> };
+type MapReducerReturn<State extends {}, Fns extends FnMap<State>> = { [F in keyof Fns]: VoidFn<Fns[F]> };
 
 type UseReducerReduce<State extends object, Props extends object> = (
     args: ReducerArgs<State, Props>
@@ -52,7 +52,11 @@ type ReducerMiddleware<
     Reducers extends (args: ReducerArgs<State, Props>) => MappedReducers<State, FnMap<State>>
 > = Array<(state: State, key: keyof ReturnType<Reducers>) => State>;
 
+type Callback<T> = T | ((prev: T) => T);
+
 const entries = <T extends {}, F>(t: T): MapArray<T[], F> => Object.entries(t) as any;
+
+const isPromise = <T>(promise: any): promise is Promise<T> => promise instanceof Promise;
 
 export const useTypedReducer = <State extends {}, Reducers extends Dispatch<State, Reducers>>(
     initialState: State,
@@ -82,10 +86,10 @@ export const useMutable = <T extends {}>(state: T): MutableRefObject<T> => {
     return mutable;
 };
 
-export const dispatchCallback = <Prev extends any, T extends Prev | ((prev: Prev) => Prev)>(prev: Prev, setter: T) =>
+export const dispatchCallback = <Prev extends any, T extends Callback<Prev>>(prev: Prev, setter: T) =>
     typeof setter === "function" ? setter(prev) : setter;
 
-export type DispatchCallback<T extends any> = T | ((prev: T) => T);
+export type DispatchCallback<T extends any> = Callback<T>;
 
 const reduceMiddleware = <State extends {}, Middlewares extends Array<(state: State, key: string) => State>>(
     state: State,
@@ -120,13 +124,13 @@ export const useReducer = <
         });
 
         return entries<string, any>(reducers as any).reduce(
-            (acc, [name, dispatch]) => ({
+            (acc, [name, dispatch]: any) => ({
                 ...acc,
                 [name]: (...params: any[]) => {
                     const result = dispatch(...params);
                     const set = (newState: State) =>
-                        setState((prev) => reduceMiddleware(newState, prev, middleware.current, name as any));
-                    return result instanceof Promise ? void result.then(set) : set(result);
+                        setState((prev) => reduceMiddleware(newState, prev, middleware.current, name));
+                    return isPromise<State>(result) ? void result.then(set) : set(result);
                 }
             }),
             {} as MapReducerReturn<State, ReturnType<Reducers>>
@@ -153,7 +157,7 @@ export const createGlobalReducer = <
 ): (<Selector extends (state: State) => any>(
     selector?: Selector
 ) => UseReducer<Selector extends (state: State) => State ? State : ReturnType<Selector>, State, Props, Reducers>) => {
-    let state = { ...initialState };
+    let state = initialState;
     const getSnapshot = () => state;
     const listeners = new Set<Listener<State>>();
     const addListener = (listener: Listener<State>) => {
@@ -177,7 +181,7 @@ export const createGlobalReducer = <
                 const result = fn(...args);
                 const set = (newState: State) =>
                     setState((prev) => reduceMiddleware(newState, prev, middlewareList, name));
-                return result instanceof Promise ? result.then(set) : set(result);
+                return isPromise<State>(result) ? result.then(set) : set(result);
             }
         }),
         {}
