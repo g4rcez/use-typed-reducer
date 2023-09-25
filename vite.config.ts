@@ -1,7 +1,8 @@
 import { defineConfig } from "vite";
+import dts from "vite-plugin-dts";
 
 export default defineConfig({
-    plugins: [],
+    plugins: [dts({ outDir: "./dist", tsconfigPath: "./tsconfig.json" })],
     build: {
         sourcemap: true,
         outDir: "./dist",
@@ -10,11 +11,11 @@ export default defineConfig({
             name: "use-typed-reducer",
             entry: "./src/index.ts",
             fileName: "index",
-            formats: ["cjs", "es", "umd"],
+            formats: ["cjs", "es", "umd"]
         },
         rollupOptions: {
             treeshake: true,
-            external: ["react"],
-        },
-    },
+            external: ["react"]
+        }
+    }
 });

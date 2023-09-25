@@ -1,5 +1,5 @@
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
-import sync from "use-sync-external-store/with-selector";
+import {useSyncExternalStoreWithSelector} from "use-sync-external-store/with-selector";
 
 type Listener<State> = (state: State, previous: State) => void;
 
@@ -190,7 +190,7 @@ export const createGlobalReducer = <
     const defaultSelector = (state: State) => state;
 
     return function useStore(selector) {
-        const state = sync.useSyncExternalStoreWithSelector(
+        const state = useSyncExternalStoreWithSelector(
             addListener,
             getSnapshot,
             getSnapshot,

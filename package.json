@@ -6,27 +6,13 @@
     "author": "g4rcez",
     "license": "MIT",
     "source": "./src/index.ts",
+    "main": "./dist/index.umd.cjs",
+    "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
-    "main": "./dist/index.js",
-    "module": "./dist/index.cjs",
-    "jsnext:main": "dist/index.es.js",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/g4rcez/use-reducer"
-    },
     "exports": {
         ".": {
-            "default": {
-                "type": "./dist/index.d.ts",
-                "import": "./dist/index.cjs",
-                "default": "./dist/index.js",
-                "require": "./dist/index.cjs"
-            },
-            "types": {
-                "import": "./dist/index.d.ts",
-                "require": "./dist/index.d.ts",
-                "default": "./dist/index.d.ts"
-            }
+            "import": "./dist/index.js",
+            "require": "./dist/index.umd.cjs"
         }
     },
     "engines": {
@@ -34,7 +20,7 @@
         "npm": ">=5"
     },
     "scripts": {
-        "build": "vite build; tsc",
+        "build": "vite build",
         "dev": "vite build --watch",
         "test": "vitest run"
     },
@@ -47,19 +33,19 @@
     "devDependencies": {
         "@testing-library/jest-dom": "5.17.0",
         "@testing-library/react": "14.0.0",
+        "@types/node": "20.6.5",
         "@types/react": "16.9.19",
         "@types/react-dom": "16.9.4",
         "@types/use-sync-external-store": "0.0.4",
         "@vitejs/plugin-react": "4.0.3",
-        "babel-core": "6.26.3",
-        "babel-runtime": "6.26.0",
-        "cross-env": "7.0.0",
         "jsdom": "22.1.0",
         "prettier": "3.0.0",
         "react": "18.2.0",
         "react-dom": "18.2.0",
-        "typescript": "4.0.2",
+        "tslib": "2.6.2",
+        "typescript": "5.2.2",
         "vite": "4.4.9",
+        "vite-plugin-dts": "3.5.4",
         "vitest": "0.34.5"
     },
     "files": [
