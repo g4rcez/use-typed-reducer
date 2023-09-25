@@ -1,7 +1,7 @@
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim";
+import sync from "use-sync-external-store/with-selector";
 
-type Listener<T> = (state: T, prev: T) => void;
+type Listener<State> = (state: State, previous: State) => void;
 
 type VoidableFn<Fn extends (...any: any[]) => any> = ReturnType<Fn> extends Promise<any>
     ? (...a: Parameters<Fn>) => Promise<void>
@@ -39,10 +39,12 @@ type UseReducerReduce<State extends object, Props extends object> = (
     args: ReducerArgs<State, Props>
 ) => MappedReducers<State, FnMap<State>>;
 
-type UseReducer<State extends {}, Props extends {}, Reducers extends UseReducerReduce<State, Props>> = readonly [
-    state: State,
-    dispatchers: MapReducerReturn<State, ReturnType<Reducers>>
-];
+type UseReducer<
+    Selector,
+    State extends {},
+    Props extends {},
+    Reducers extends UseReducerReduce<State, Props>
+> = readonly [state: Selector, dispatchers: MapReducerReturn<State, ReturnType<Reducers>>];
 
 type ReducerMiddleware<
     State extends object,
@@ -102,7 +104,7 @@ export const useReducer = <
     reducer: Reducers,
     props?: Props,
     middlewares?: Middlewares
-): UseReducer<State, Props, Reducers> => {
+): UseReducer<State, State, Props, Reducers> => {
     const [state, setState] = useState<State>(() => initialState);
     const mutableState = useMutable(state);
     const mutableProps = useMutable(props ?? ({} as Props));
@@ -148,7 +150,9 @@ export const createGlobalReducer = <
     reducer: Reducers,
     props?: Props,
     middlewares?: Middlewares
-): (() => UseReducer<State, Props, Reducers>) => {
+): (<Selector extends (state: State) => any>(
+    selector?: Selector
+) => UseReducer<Selector extends (state: State) => State ? State : ReturnType<Selector>, State, Props, Reducers>) => {
     let state = { ...initialState };
     const getSnapshot = () => state;
     const listeners = new Set<Listener<State>>();
@@ -178,8 +182,17 @@ export const createGlobalReducer = <
         }),
         {}
     );
-    return function useStore() {
-        const state = useSyncExternalStore(addListener, getSnapshot, getSnapshot);
+
+    const defaultSelector = (state: State) => state;
+
+    return function useStore(selector) {
+        const state = sync.useSyncExternalStoreWithSelector(
+            addListener,
+            getSnapshot,
+            getSnapshot,
+            selector || (defaultSelector as any),
+            Object.is
+        );
         return [state, dispatchers] as const;
     };
 };
