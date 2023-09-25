@@ -31,6 +31,7 @@
         "@testing-library/react": "14.0.0",
         "@types/react": "16.9.19",
         "@types/react-dom": "16.9.4",
+        "@types/use-sync-external-store": "0.0.4",
         "@vitejs/plugin-react": "4.0.3",
         "babel-core": "6.26.3",
         "babel-runtime": "6.26.0",
@@ -59,5 +60,8 @@
     },
     "files": [
         "dist"
-    ]
+    ],
+    "dependencies": {
+        "use-sync-external-store": "1.2.0"
+    }
 }
