@@ -1,5 +1,5 @@
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
-import {useSyncExternalStoreWithSelector} from "use-sync-external-store/with-selector";
+import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
 type Listener<State> = (state: State, previous: State) => void;
 
