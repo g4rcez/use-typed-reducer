@@ -1,8 +1,21 @@
 # use-typed-reducer
 
-Another way to use [useReducer](https://reactjs.org/docs/hooks-reference.html#usereducer) hook, with strongly type rules defined by you
+Another way to use [useReducer](https://reactjs.org/docs/hooks-reference.html#usereducer) hook, with strongly type rules defined by you.
 
-## Install
+**Now you can control your local state or global state using the same API**. Check the [createGlobalReducer](#createglobalreducer) for global state.
+
+<!-- TOC -->
+* [use-typed-reducer](#use-typed-reducer)
+* [Install](#install)
+* [Why use *use-typed-reducer*](#why-use-use-typed-reducer)
+* [Using](#using)
+  * [useReducer (default import) or `useTypedReducer`](#usereducer-default-import-or-usetypedreducer)
+  * [useReducerWithProps](#usereducerwithprops)
+* [useReducer](#usereducer)
+* [createGlobalReducer](#createglobalreducer)
+<!-- TOC -->
+
+# Install
 
 With npm:
 ```bash
@@ -14,15 +27,15 @@ With yarn:
 yarn add use-typed-reducer
 ```
 
-## Why use *use-typed-reducer*
+# Why use *use-typed-reducer*
 
 The original useReducer forces you to use the well-known redux pattern. We need to pass the parameters in an object and a mandatory "type" to identify the action being performed.
 
 With useTypedReducer, you can use your function the way you prefer, it will infer the parameters and return a new function with the current state so that you can make the changes you want to the new state
 
-## Using
+# Using
 
-### useReducer (default import) or `useTypedReducer`
+## useReducer (default import) or `useTypedReducer`
 
 `useTypedReducer` receive the initialState and dictionary/object with all reducers and return tuple with state and dispatch. Dispatch has the same key and functions of given dictionary in `useTypedReducer`, but return a new function to update state. This void `dispatch({ type: "ACTION" })`
 
@@ -66,7 +79,7 @@ const Component = () => {
 ```
 
 
-### useReducerWithProps
+## useReducerWithProps
 
 The same of useTypedReducer, but receive a `getProps` as second argument in the second function.
 
@@ -114,7 +127,7 @@ const Component = (props: Props) => {
 };
 ```
 
-## useReducer
+# useReducer
 
 This is the new way to control your state, but with the old way of use-typed-reducer. Now you have a function to getState and a function to get the props. With this you can avoid to take a function that return a function to update state.
 
@@ -127,7 +140,7 @@ export const useMath = () => {
 };
 ```
 
-## createGlobalReducer
+# createGlobalReducer
 
 If you need a way to create a global state, you can use this function. This enables you to create a global state without a Context provider. The API is the same API of `useReducer`, but returns a hook to use the global context.
 
