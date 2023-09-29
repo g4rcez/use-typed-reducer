@@ -1,5 +1,6 @@
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
+import { shallowCompare } from "./shallow-compare";
 
 type Listener<State> = (state: State, previous: State) => void;
 
@@ -155,7 +156,8 @@ export const createGlobalReducer = <
     props?: Props,
     middlewares?: Middlewares
 ): (<Selector extends (state: State) => any>(
-    selector?: Selector
+    selector?: Selector,
+    comparator?: (a: any, b: any) => boolean
 ) => UseReducer<Selector extends (state: State) => State ? State : ReturnType<Selector>, State, Props, Reducers>) => {
     let state = initialState;
     const getSnapshot = () => state;
@@ -189,13 +191,13 @@ export const createGlobalReducer = <
 
     const defaultSelector = (state: State) => state;
 
-    return function useStore(selector) {
+    return function useStore(selector, comparator = shallowCompare) {
         const state = useSyncExternalStoreWithSelector(
             addListener,
             getSnapshot,
             getSnapshot,
-            selector || (defaultSelector as any),
-            Object.is
+            selector || defaultSelector,
+            comparator
         );
         return [state, dispatchers] as const;
     };
