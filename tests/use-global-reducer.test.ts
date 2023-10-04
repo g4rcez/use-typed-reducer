@@ -15,4 +15,14 @@ describe("Should test createGlobalReducer", () => {
         });
         expect(result.current[0].name).toBe("hello: Bar Foo");
     });
+
+    test("Should compare the useStore.dispatchers and useStore()[1]", () => {
+        const useStore = createGlobalReducer({ n: 0 }, (args) => ({
+            inc: () => ({ n: args.state().n + 1 })
+        }));
+        const { result } = renderHook(() => useStore());
+        const [state, dispatch] = result.current;
+        expect(state.n).toBe(0);
+        expect(dispatch).toStrictEqual(useStore.dispatchers);
+    });
 });
