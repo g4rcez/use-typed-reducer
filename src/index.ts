@@ -1,4 +1,4 @@
-import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react";
+import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 import { shallowCompare } from "./shallow-compare";
 
@@ -10,15 +10,15 @@ type VoidFn<Fn extends (...any: any[]) => any> = ReturnType<Fn> extends Promise<
     ? (...a: Parameters<Fn>) => Promise<void>
     : (...a: Parameters<Fn>) => void;
 
-type Action<State> = (...args: any) => PromiseBox<(state: State) => State>;
+type Action<State, Props> = (...args: any) => PromiseBox<(state: State, Props: Props) => State>;
 
-export type Dispatch<State, Fns extends { [key in keyof Fns]: Action<State> }> = {
-    [R in keyof Fns]: (...args: any[]) => PromiseBox<(state: State) => State>;
+export type Dispatch<State, Props extends {}, Fns extends { [key in keyof Fns]: Action<State, Props> }> = {
+    [R in keyof Fns]: (...args: any[]) => PromiseBox<(state: State, Props: Props) => State>;
 };
 
 type MapArray<T, F> = { [K in keyof T]: [K, F] };
 
-type MapReducers<State extends {}, Reducers extends Dispatch<State, Reducers>> = {
+type MapReducers<State extends {}, Props extends {}, Reducers extends Dispatch<State, Props, Reducers>> = {
     [R in keyof Reducers]: VoidFn<Reducers[R]>;
 };
 
@@ -59,24 +59,28 @@ const entries = <T extends {}, F>(t: T): MapArray<T[], F> => Object.entries(t) a
 
 const isPromise = <T>(promise: any): promise is Promise<T> => promise instanceof Promise;
 
-export const useTypedReducer = <State extends {}, Reducers extends Dispatch<State, Reducers>>(
+export const useTypedReducer = <State extends {}, Reducers extends Dispatch<State, Props, Reducers>, Props extends {}>(
     initialState: State,
-    reducers: Reducers
-): [state: State, dispatch: MapReducers<State, Reducers>] => {
+    reducers: Reducers,
+    props?: Props
+): [state: State, dispatch: MapReducers<State, Props, Reducers>] => {
     const [state, setState] = useState(initialState);
+    const refProps = useMutable<Props>((props as never) ?? {});
+    const getProps = useCallback(() => refProps.current, [refProps]);
+
     const dispatches = useMemo<any>(
         () =>
-            entries<Reducers, Action<State>>(reducers).reduce(
+            entries<Reducers, Action<State, Props>>(reducers).reduce(
                 (acc, [name, dispatch]) => ({
                     ...acc,
                     [name]: async (...params: unknown[]) => {
                         const dispatcher = await dispatch(...params);
-                        return setState((previousState: State) => dispatcher(previousState));
+                        return setState((previousState: State) => dispatcher(previousState, getProps()));
                     }
                 }),
                 reducers
             ),
-        [reducers]
+        [reducers, getProps]
     );
     return [state, dispatches];
 };
@@ -158,7 +162,9 @@ export const createGlobalReducer = <
 ): (<Selector extends (state: State) => any>(
     selector?: Selector,
     comparator?: (a: any, b: any) => boolean
-) => UseReducer<Selector extends (state: State) => State ? State : ReturnType<Selector>, State, Props, Reducers>) => {
+) => UseReducer<Selector extends (state: State) => State ? State : ReturnType<Selector>, State, Props, Reducers>) & {
+    dispatchers: MapReducerReturn<State, ReturnType<Reducers>>;
+} => {
     let state = initialState;
     const getSnapshot = () => state;
     const listeners = new Set<Listener<State>>();
@@ -191,16 +197,19 @@ export const createGlobalReducer = <
 
     const defaultSelector = (state: State) => state;
 
-    return function useStore(selector, comparator = shallowCompare) {
-        const state = useSyncExternalStoreWithSelector(
-            addListener,
-            getSnapshot,
-            getSnapshot,
-            selector || defaultSelector,
-            comparator
-        );
-        return [state, dispatchers] as const;
-    };
+    return Object.assign(
+        function useStore<Selector extends (state: State) => any>(selector?: Selector, comparator = shallowCompare) {
+            const state = useSyncExternalStoreWithSelector(
+                addListener,
+                getSnapshot,
+                getSnapshot,
+                selector || defaultSelector,
+                comparator
+            );
+            return [state, dispatchers] as const;
+        },
+        { dispatchers }
+    );
 };
 
 export default useTypedReducer;

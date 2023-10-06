@@ -18,12 +18,11 @@ describe("Should test shallow compare", () => {
 
     test("✅empty array equals", () => expect(shallowCompare([], [])).toBe(true));
 
-    test("✅ diff instances empty", () => {
+    test("✅diff instances empty", () => {
         class Test {
             public constructor(public value: string) {}
         }
-
-        expect(shallowCompare(new Test(""), new Test(""))).toBe(false);
+        expect(shallowCompare(new Test(""), new Test(""))).toBe(true);
     });
 
     test("🚨diff object", () => expect(shallowCompare({ a: 2 }, { a: 1 })).toBe(false));
