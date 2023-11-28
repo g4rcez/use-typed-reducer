@@ -96,12 +96,36 @@ export const dispatchCallback = <Prev extends any, T extends Callback<Prev>>(pre
 
 export type DispatchCallback<T extends any> = Callback<T>;
 
+const clone = <C>(c: C) => Object.assign(Object.create(Object.getPrototypeOf(c)), c);
+
+// https://gist.github.com/ahtcx/0cd94e62691f539160b32ecda18af3d6?permalink_comment_id=2930530#gistcomment-2930530
+const isObject = <T>(obj: T) => obj && typeof obj === "object";
+
+const merge = <T>(target: T, source: T) => {
+    if (!isObject(target) || !isObject(source)) {
+        return source;
+    }
+    Object.keys(source as any).forEach((key) => {
+        const targetValue = target[key];
+        const sourceValue = source[key];
+
+        if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
+            target[key] = targetValue.concat(sourceValue);
+        } else if (isObject(targetValue) && isObject(sourceValue)) {
+            target[key] = merge(Object.assign({}, targetValue), sourceValue);
+        } else {
+            target[key] = sourceValue;
+        }
+    });
+    return target;
+};
+
 const reduceMiddleware = <State extends {}, Middlewares extends Array<(state: State, key: string) => State>>(
     state: State,
     prev: State,
     middleware: Middlewares,
     key: string
-) => middleware.reduce<State>((acc, fn) => fn(acc, key), { ...prev, ...state });
+) => middleware.reduce<State>((acc, fn) => fn(acc, key), merge(prev, clone(state)));
 
 export const useReducer = <
     State extends {},

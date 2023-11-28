@@ -22,7 +22,7 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite build --watch",
-        "test": "vitest run"
+        "test": "NODE_ENV=test vitest run"
     },
     "dependencies": {
         "use-sync-external-store": "1.2.0"
@@ -50,5 +50,9 @@
     },
     "files": [
         "dist"
-    ]
+    ],
+    "volta": {
+        "node": "20.9.0",
+        "yarn": "1.22.21"
+    }
 }
