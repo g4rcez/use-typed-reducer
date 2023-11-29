@@ -1,5 +1,5 @@
 import { describe } from "vitest";
-import { shallowCompare } from "../src/shallow-compare";
+import { shallowCompare } from "../src/lib";
 
 describe("Should test shallow compare", () => {
     test("✅ string equals", () => expect(shallowCompare("a", "a")).toBe(true));

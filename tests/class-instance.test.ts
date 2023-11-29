@@ -16,16 +16,19 @@ describe("Should test useReducer using classes", () => {
             useReducer(new TestClass("Test"), (get) => ({
                 greeting: (hello: string) => {
                     const instance = get.state();
-                    expect((instance as any).constructor.name).toBe(new TestClass("TEST").constructor.name);
+                    expect(instance.constructor.name).toBe(new TestClass("TEST").constructor.name);
                     instance.change(hello);
                     return instance;
-                }
+                },
+                noop: () => get.state()
             }))
         );
         const [state, dispatch] = result.current;
         expect(state.name).toBe("Test");
         act(() => dispatch.greeting("Bar"));
         expect(result.current[0].name).toBe("Bar");
+        expect(typeof result.current[0].change).toBe("function");
+        act(() => dispatch.noop());
         expect(typeof result.current[0].change).toBe("function");
     });
 });

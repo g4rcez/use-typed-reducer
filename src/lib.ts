@@ -1,4 +1,30 @@
-const isPrimitive = (a: any): a is string | number | boolean => {
+export const isObject = <T>(obj: T) => obj && typeof obj === "object";
+
+export const keys = Object.keys as <T>(t: T) => Array<keyof T>;
+
+type MapArray<T, F> = { [K in keyof T]: [K, F] };
+export const entries = <T extends {}, F>(t: T): MapArray<T[], F> => Object.entries(t) as any;
+
+export const isPromise = <T>(promise: any): promise is Promise<T> => promise instanceof Promise;
+
+// https://gist.github.com/ahtcx/0cd94e62691f539160b32ecda18af3d6?permalink_comment_id=2930530#gistcomment-2930530
+export const merge = <T>(currentState: T, previous: T) => {
+    if (!isObject(previous) || !isObject(currentState)) {
+        return currentState;
+    }
+    keys(currentState).forEach((key) => {
+        const targetValue = previous[key];
+        const sourceValue = currentState[key];
+        if (Array.isArray(targetValue) && Array.isArray(sourceValue))
+            return ((previous as any)[key] = targetValue.concat(sourceValue));
+        if (isObject(targetValue) && isObject(sourceValue))
+            return (previous[key] = merge(Object.assign({}, targetValue), sourceValue));
+        return (previous[key] = sourceValue);
+    });
+    return previous;
+};
+
+export const isPrimitive = (a: any): a is string | number | boolean => {
     const type = typeof a;
     return (
         type === "string" ||
@@ -9,6 +35,7 @@ const isPrimitive = (a: any): a is string | number | boolean => {
         type === null
     );
 };
+
 
 export const shallowCompare = (left: any, right: any): boolean => {
     if (left === right || Object.is(left, right)) return true;

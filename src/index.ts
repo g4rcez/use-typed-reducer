@@ -1,6 +1,6 @@
 import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
-import { shallowCompare } from "./shallow-compare";
+import { entries, isPromise, shallowCompare } from "./lib";
 
 type Listener<State> = (state: State, previous: State) => void;
 
@@ -15,8 +15,6 @@ type Action<State, Props> = (...args: any) => PromiseBox<(state: State, Props: P
 export type Dispatch<State, Props extends {}, Fns extends { [key in keyof Fns]: Action<State, Props> }> = {
     [R in keyof Fns]: (...args: any[]) => PromiseBox<(state: State, Props: Props) => State>;
 };
-
-type MapArray<T, F> = { [K in keyof T]: [K, F] };
 
 type MapReducers<State extends {}, Props extends {}, Reducers extends Dispatch<State, Props, Reducers>> = {
     [R in keyof Reducers]: VoidFn<Reducers[R]>;
@@ -55,10 +53,6 @@ type ReducerMiddleware<
 
 type Callback<T> = T | ((prev: T) => T);
 
-const entries = <T extends {}, F>(t: T): MapArray<T[], F> => Object.entries(t) as any;
-
-const isPromise = <T>(promise: any): promise is Promise<T> => promise instanceof Promise;
-
 export const useTypedReducer = <State extends {}, Reducers extends Dispatch<State, Props, Reducers>, Props extends {}>(
     initialState: State,
     reducers: Reducers,
@@ -96,36 +90,15 @@ export const dispatchCallback = <Prev extends any, T extends Callback<Prev>>(pre
 
 export type DispatchCallback<T extends any> = Callback<T>;
 
-const clone = <C>(c: C) => Object.assign(Object.create(Object.getPrototypeOf(c)), c);
-
-// https://gist.github.com/ahtcx/0cd94e62691f539160b32ecda18af3d6?permalink_comment_id=2930530#gistcomment-2930530
-const isObject = <T>(obj: T) => obj && typeof obj === "object";
-
-const merge = <T>(target: T, source: T) => {
-    if (!isObject(target) || !isObject(source)) {
-        return source;
-    }
-    Object.keys(source as any).forEach((key) => {
-        const targetValue = target[key];
-        const sourceValue = source[key];
-
-        if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
-            target[key] = targetValue.concat(sourceValue);
-        } else if (isObject(targetValue) && isObject(sourceValue)) {
-            target[key] = merge(Object.assign({}, targetValue), sourceValue);
-        } else {
-            target[key] = sourceValue;
-        }
-    });
-    return target;
-};
-
-const reduceMiddleware = <State extends {}, Middlewares extends Array<(state: State, key: string) => State>>(
+const reduce = <State extends {}, Middlewares extends Array<(state: State, key: string) => State>>(
     state: State,
     prev: State,
     middleware: Middlewares,
     key: string
-) => middleware.reduce<State>((acc, fn) => fn(acc, key), merge(prev, clone(state)));
+) => {
+    const initial = Array.isArray(state) ? state : { ...prev, ...state };
+    return middleware.reduce<State>((acc, fn) => fn(acc, key), initial);
+};
 
 export const useReducer = <
     State extends {},
@@ -158,7 +131,7 @@ export const useReducer = <
                 [name]: (...params: any[]) => {
                     const result = dispatch(...params);
                     const set = (newState: State) =>
-                        setState((prev) => reduceMiddleware(newState, prev, middleware.current, name));
+                        setState((prev) => reduce(newState, prev, middleware.current, name));
                     return isPromise<State>(result) ? void result.then(set) : set(result);
                 }
             }),
@@ -211,8 +184,7 @@ export const createGlobalReducer = <
             ...acc,
             [name]: (...args: any[]) => {
                 const result = fn(...args);
-                const set = (newState: State) =>
-                    setState((prev) => reduceMiddleware(newState, prev, middlewareList, name));
+                const set = (newState: State) => setState((prev) => reduce(newState, prev, middlewareList, name));
                 return isPromise<State>(result) ? result.then(set) : set(result);
             }
         }),

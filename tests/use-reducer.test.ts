@@ -6,7 +6,7 @@ describe("Should test useReducer", () => {
     test("Should create hook", async () => {
         const { result } = renderHook(() =>
             useReducer({ name: "Foo" }, (args) => ({
-                greeting: (hello: string) => ({ name: `hello: ${hello} ${args.state().name}` })
+                greeting: (hello: string) => ({ name: `${hello} ${args.state().name}` })
             }))
         );
         const [state, dispatch] = result.current;
@@ -14,7 +14,7 @@ describe("Should test useReducer", () => {
         act(() => {
             dispatch.greeting("Bar");
         });
-        expect(result.current[0].name).toBe("hello: Bar Foo");
+        expect(result.current[0].name).toBe("Bar Foo");
     });
 
     test("Should test hook with promise", async () => {
