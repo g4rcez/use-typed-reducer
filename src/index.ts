@@ -1,6 +1,6 @@
 import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
-import { entries, isPromise, shallowCompare } from "./lib";
+import { entries, isObject, isPromise, shallowCompare } from "./lib";
 
 type Listener<State> = (state: State, previous: State) => void;
 
@@ -96,7 +96,7 @@ const reduce = <State extends {}, Middlewares extends Array<(state: State, key: 
     middleware: Middlewares,
     key: string
 ) => {
-    const initial = Array.isArray(state) ? state : { ...prev, ...state };
+    const initial = Array.isArray(state) ? state : isObject(state) ? { ...prev, ...state } : state;
     return middleware.reduce<State>((acc, fn) => fn(acc, key), initial);
 };
 
