@@ -16,6 +16,8 @@ import {
     ReducerMiddleware
 } from "./types";
 
+export * from "./types";
+
 export const useTypedReducer = <State extends {}, Reducers extends Dispatch<State, Props, Reducers>, Props extends {}>(
     initialState: State,
     reducers: Reducers,
