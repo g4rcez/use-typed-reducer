@@ -1,57 +1,20 @@
 import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
-import { entries, isObject, isPromise, shallowCompare } from "./lib";
-
-type Listener<State> = (state: State, previous: State) => void;
-
-type PromiseBox<T> = T | Promise<T>;
-
-type VoidFn<Fn extends (...any: any[]) => any> = ReturnType<Fn> extends Promise<any>
-    ? (...a: Parameters<Fn>) => Promise<void>
-    : (...a: Parameters<Fn>) => void;
-
-type Action<State, Props> = (...args: any) => PromiseBox<(state: State, Props: Props) => State>;
-
-export type Dispatch<State, Props extends {}, Fns extends { [key in keyof Fns]: Action<State, Props> }> = {
-    [R in keyof Fns]: (...args: any[]) => PromiseBox<(state: State, Props: Props) => State>;
-};
-
-type MapReducers<State extends {}, Props extends {}, Reducers extends Dispatch<State, Props, Reducers>> = {
-    [R in keyof Reducers]: VoidFn<Reducers[R]>;
-};
-
-type ReducerArgs<State extends {}, Props extends object> = {
-    state: () => State;
-    props: () => Props;
-    initialState: State;
-};
-
-type FnMap<State> = { [k: string]: (...args: any[]) => PromiseBox<Partial<State>> };
-
-type MappedReducers<State extends {}, Fns extends FnMap<State>> = {
-    [F in keyof Fns]: (...args: Parameters<Fns[F]>) => PromiseBox<Partial<State>>;
-};
-
-type MapReducerReturn<State extends {}, Fns extends FnMap<State>> = { [F in keyof Fns]: VoidFn<Fns[F]> };
-
-type UseReducerReduce<State extends object, Props extends object> = (
-    args: ReducerArgs<State, Props>
-) => MappedReducers<State, FnMap<State>>;
-
-type UseReducer<
-    Selector,
-    State extends {},
-    Props extends {},
-    Reducers extends UseReducerReduce<State, Props>
-> = readonly [state: Selector, dispatchers: MapReducerReturn<State, ReturnType<Reducers>>];
-
-type ReducerMiddleware<
-    State extends object,
-    Props extends object,
-    Reducers extends (args: ReducerArgs<State, Props>) => MappedReducers<State, FnMap<State>>
-> = Array<(state: State, key: keyof ReturnType<Reducers>) => State>;
-
-type Callback<T> = T | ((prev: T) => T);
+import { clone, entries, isPromise, shallowCompare } from "./lib";
+import {
+    Dispatch,
+    MapReducers,
+    FnMap,
+    Action,
+    Callback,
+    Listener,
+    UseReducer,
+    ReducerArgs,
+    MappedReducers,
+    ReducerActions,
+    MapReducerReturn,
+    ReducerMiddleware
+} from "./types";
 
 export const useTypedReducer = <State extends {}, Reducers extends Dispatch<State, Props, Reducers>, Props extends {}>(
     initialState: State,
@@ -88,21 +51,23 @@ export const useMutable = <T extends {}>(state: T): MutableRefObject<T> => {
 export const dispatchCallback = <Prev extends any, T extends Callback<Prev>>(prev: Prev, setter: T) =>
     typeof setter === "function" ? setter(prev) : setter;
 
-export type DispatchCallback<T extends any> = Callback<T>;
-
-const reduce = <State extends {}, Middlewares extends Array<(state: State, key: string) => State>>(
+const reduce = <State extends {}, Middlewares extends Array<(state: State, key: string, prev: State) => State>>(
     state: State,
     prev: State,
     middleware: Middlewares,
     key: string
 ) => {
-    const initial = Array.isArray(state) ? state : isObject(state) ? { ...prev, ...state } : state;
-    return middleware.reduce<State>((acc, fn) => fn(acc, key), initial);
+    const initial = Array.isArray(state)
+        ? state
+        : state.constructor.name === Object.name
+        ? { ...prev, ...state }
+        : state;
+    return middleware.reduce<State>((acc, fn) => fn(acc, key, prev), initial);
 };
 
 export const useReducer = <
     State extends {},
-    Reducers extends UseReducerReduce<State, Props>,
+    Reducers extends ReducerActions<State, Props>,
     Props extends object,
     Middlewares extends ReducerMiddleware<State, Props, Reducers>
 >(
@@ -148,7 +113,7 @@ export const createReducer =
 
 export const createGlobalReducer = <
     State extends {},
-    Reducers extends UseReducerReduce<State, Props>,
+    Reducers extends ReducerActions<State, Props>,
     Props extends object,
     Middlewares extends ReducerMiddleware<State, Props, Reducers>
 >(
@@ -206,6 +171,22 @@ export const createGlobalReducer = <
         },
         { dispatchers }
     );
+};
+
+export const useClassReducer = <T extends object>(instance: T) => {
+    const [proxy, setProxy] = useState(
+        new Proxy(
+            instance,
+            Object.assign({}, Reflect, {
+                set: (obj: any, prop: any, value: any) => {
+                    (obj as any)[prop] = value;
+                    setProxy(clone(obj));
+                    return true;
+                }
+            })
+        )
+    );
+    return proxy;
 };
 
 export default useTypedReducer;
