@@ -1,7 +1,7 @@
 {
     "name": "use-typed-reducer",
     "type": "module",
-    "version": "4.0.0",
+    "version": "4.0.1",
     "description": "use-reducer React hook alternative",
     "author": "g4rcez",
     "license": "MIT",
