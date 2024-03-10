@@ -1,3 +1,7 @@
+export type Callback<T> = T | ((prev: T) => T);
+
+export type Debug<Props extends object = {}> = { method: string; time: number; props: Props };
+
 export type Listener<State> = (state: State, previous: State) => void;
 
 export type PromiseBox<T> = T | Promise<T>;
@@ -49,12 +53,3 @@ export type UseReducer<
 export type ReducerMiddleware<State extends object, Props extends object> = Array<
     (state: State, prev: State, debug: Debug<Props>) => State
 >;
-
-export type Callback<T> = T | ((prev: T) => T);
-
-export type Debug<Props extends object = {}> = {
-    method: string;
-    time: number;
-    props: Props;
-};
-
