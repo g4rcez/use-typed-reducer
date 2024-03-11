@@ -6,5 +6,5 @@ export {
     createLocalStoragePlugin,
     createLoggerPlugin,
     createSessionStoragePlugin,
-    createStoragePlugin,
+    createStoragePlugin
 } from "./plugins";
