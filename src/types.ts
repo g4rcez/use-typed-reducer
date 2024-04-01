@@ -1,6 +1,6 @@
 export type Callback<T> = T | ((prev: T) => T);
 
-export type Debug<Props extends object = {}> = { method: string; time: number; props: Props };
+export type Debug<Props extends object = {}> = { method: string; time: number; props: Props; selector?: Function };
 
 export type Listener<State> = (state: State, previous: State) => void;
 

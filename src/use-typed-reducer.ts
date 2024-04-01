@@ -94,10 +94,11 @@ const optimizedFunc =
         return set(result);
     };
 
-type Options<M, P, D> = Partial<{
+type Options<M, P, D, S> = Partial<{
     middlewares: M;
     props: P;
     debug: D;
+    selector?: S;
 }>;
 
 export const useReducer = <
@@ -109,7 +110,7 @@ export const useReducer = <
 >(
     initialState: State,
     reducer: Reducers,
-    options?: Options<Middlewares, Props, UseDebug>
+    options?: Options<Middlewares, Props, UseDebug, undefined>
 ): UseReducer<State, State, Props, Reducers> => {
     const [state, setState] = useState<State>(() => initialState);
     const mutableState = useMutable(state);
@@ -150,18 +151,13 @@ export const useReducer = <
     return [state, dispatchers] as const;
 };
 
-export const createGlobalReducer = <
-    State extends {},
-    Reducers extends ReducerActions<State, {}>,
-    Middleware extends ReducerMiddleware<State, {}>
->(
+export const createGlobalReducer = <State extends {}, Reducers extends ReducerActions<State, {}>>(
     initialState: State,
-    reducer: Reducers,
-    options?: Options<Middleware, {}, {}>
-): (<Selector extends (state: State) => any, Middlewares extends ReducerMiddleware<State, {}>>(
+    reducer: Reducers
+): (<Selector extends (state: State) => any, Middlewares extends ReducerMiddleware<ReturnType<Selector>, {}>>(
     selector?: Selector,
     comparator?: (a: any, b: any) => boolean,
-    middleware?: Middlewares
+    options?: Options<Middlewares, {}, {}, Selector>
 ) => UseReducer<Selector extends (state: State) => State ? State : ReturnType<Selector>, State, {}, Reducers>) & {
     dispatchers: MapReducerReturn<State, ReturnType<Reducers>>;
 } => {
@@ -201,20 +197,11 @@ export const createGlobalReducer = <
     const defaultSelector = (state: State) => state;
 
     return Object.assign(
-        function useStore<Selector extends (state: State) => any, Middlewares extends ReducerMiddleware<State, {}>>(
-            selector?: Selector,
-            comparator = shallowCompare,
-            innerMid?: Middlewares
-        ) {
-            const middleware = useMutable(
-                options?.middlewares
-                    ? innerMid
-                        ? options.middlewares.concat(innerMid)
-                        : options.middlewares
-                    : innerMid
-                    ? innerMid
-                    : []
-            );
+        function useStore<
+            Selector extends (state: State) => any,
+            M extends ReducerMiddleware<ReturnType<Selector>, {}>
+        >(selector?: Selector, comparator = shallowCompare, options?: Options<M, {}, {}, Selector>) {
+            const middleware = useMutable(options?.middlewares ?? []);
             const state = useSyncExternalStoreWithSelector(
                 addListener,
                 getSnapshot,
@@ -224,10 +211,10 @@ export const createGlobalReducer = <
             );
             const previous = usePrevious(state);
             useEffect(() => {
-                if (!middleware) return;
-                middleware.current.forEach((middle) => {
-                    middle(state, previous, { method: "@globalState@", time: -1, props: {} });
-                });
+                if (Array.isArray(middleware.current))
+                    middleware.current.forEach((middle) => {
+                        middle(state, previous, { method: "@globalState@", time: -1, props: {}, selector });
+                    });
             }, [state, previous, middleware]);
             return [state, dispatchers] as const;
         },

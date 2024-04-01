@@ -1,6 +1,7 @@
 export type {
     Action,
     Callback,
+    Comparator,
     Debug,
     Dispatch,
     FnMap,
@@ -22,5 +23,6 @@ export {
     createLocalStoragePlugin,
     createLoggerPlugin,
     createSessionStoragePlugin,
-    createStoragePlugin
+    createStoragePlugin,
+    type StoragePluginManager
 } from "./plugins";
