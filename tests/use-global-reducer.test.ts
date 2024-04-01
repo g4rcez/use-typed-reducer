@@ -1,12 +1,24 @@
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { createGlobalReducer } from "../src";
 
 describe("Should test createGlobalReducer", () => {
     test("Should test useStore hook", async () => {
-        const useStore = createGlobalReducer({ name: "Foo" }, (args) => ({
-            greeting: (hello: string) => ({ name: `hello: ${hello} ${args.state().name}` })
-        }));
+        const calls = {
+            fn: (state: any) => ({ ...state, n: state.n + 1 })
+        };
+        const testCalled = vi.spyOn(calls, "fn");
+        const useStore = createGlobalReducer(
+            { name: "Foo", n: 0 },
+            (args) => ({
+                greeting: (hello: string) => ({ name: `hello: ${hello} ${args.state().name}` }),
+                inc: () => {
+                    const state = args.state();
+                    return { n: state.n + 1 };
+                }
+            }),
+            { middlewares: [calls.fn] }
+        );
         const { result } = renderHook(() => useStore());
         const [state, dispatch] = result.current;
         expect(state.name).toBe("Foo");
@@ -14,6 +26,7 @@ describe("Should test createGlobalReducer", () => {
             dispatch.greeting("Bar");
         });
         expect(result.current[0].name).toBe("hello: Bar Foo");
+        expect(testCalled).toBeCalledTimes(2);
     });
 
     test("Should compare the useStore.dispatchers and useStore()[1]", () => {

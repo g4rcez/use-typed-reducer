@@ -40,7 +40,6 @@ export const useLegacyReducer = <State extends {}, Reducers extends Dispatch<Sta
     return [state, dispatches];
 };
 
-
 const reduce = <State extends {}>(state: State, prev: State) => {
     if (prev === state) return state;
     return state.constructor.name === Object.name ? { ...prev, ...state } : state;
@@ -95,6 +94,12 @@ const optimizedFunc =
         return set(result);
     };
 
+type Options<M, P, D> = Partial<{
+    middlewares: M;
+    props: P;
+    debug: D;
+}>;
+
 export const useReducer = <
     State extends {},
     Reducers extends ReducerActions<State, Props>,
@@ -104,11 +109,7 @@ export const useReducer = <
 >(
     initialState: State,
     reducer: Reducers,
-    options?: Partial<{
-        middlewares: Middlewares;
-        props: Props;
-        debug: UseDebug;
-    }>
+    options?: Options<Middlewares, Props, UseDebug>
 ): UseReducer<State, State, Props, Reducers> => {
     const [state, setState] = useState<State>(() => initialState);
     const mutableState = useMutable(state);
@@ -149,9 +150,14 @@ export const useReducer = <
     return [state, dispatchers] as const;
 };
 
-export const createGlobalReducer = <State extends {}, Reducers extends ReducerActions<State, {}>>(
+export const createGlobalReducer = <
+    State extends {},
+    Reducers extends ReducerActions<State, {}>,
+    Middleware extends ReducerMiddleware<State, {}>
+>(
     initialState: State,
-    reducer: Reducers
+    reducer: Reducers,
+    options?: Options<Middleware, {}, {}>
 ): (<Selector extends (state: State) => any, Middlewares extends ReducerMiddleware<State, {}>>(
     selector?: Selector,
     comparator?: (a: any, b: any) => boolean,
@@ -198,8 +204,17 @@ export const createGlobalReducer = <State extends {}, Reducers extends ReducerAc
         function useStore<Selector extends (state: State) => any, Middlewares extends ReducerMiddleware<State, {}>>(
             selector?: Selector,
             comparator = shallowCompare,
-            middleware?: Middlewares
+            innerMid?: Middlewares
         ) {
+            const middleware = useMutable(
+                options?.middlewares
+                    ? innerMid
+                        ? options.middlewares.concat(innerMid)
+                        : options.middlewares
+                    : innerMid
+                    ? innerMid
+                    : []
+            );
             const state = useSyncExternalStoreWithSelector(
                 addListener,
                 getSnapshot,
@@ -210,13 +225,12 @@ export const createGlobalReducer = <State extends {}, Reducers extends ReducerAc
             const previous = usePrevious(state);
             useEffect(() => {
                 if (!middleware) return;
-                middleware.forEach((middle) => {
+                middleware.current.forEach((middle) => {
                     middle(state, previous, { method: "@globalState@", time: -1, props: {} });
                 });
-            }, [state, previous]);
+            }, [state, previous, middleware]);
             return [state, dispatchers] as const;
         },
         { dispatchers }
     );
 };
-
