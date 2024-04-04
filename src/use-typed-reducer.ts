@@ -40,9 +40,15 @@ export const useLegacyReducer = <State extends {}, Reducers extends Dispatch<Sta
     return [state, dispatches];
 };
 
-const reduce = <State extends {}>(state: State, prev: State) => {
-    if (prev === state) return state;
-    return state.constructor.name === Object.name ? { ...prev, ...state } : state;
+const reduce = <State extends {}>(
+    state: State,
+    prev: State,
+    mutations: Array<(state: State, prev: State) => State>
+) => {
+    if (prev === state) return mutations.reduce((acc, el) => el(acc, prev), state);
+    return state.constructor.name === Object.name
+        ? mutations.reduce((acc, el) => el(acc, prev), { ...prev, ...state })
+        : mutations.reduce((acc, el) => el(acc, prev), state);
 };
 
 const debugFunc =
@@ -51,12 +57,13 @@ const debugFunc =
         dispatch: (...args: any[]) => any,
         setState: React.Dispatch<SetStateAction<State>>,
         getProps: () => Props,
-        debug: React.MutableRefObject<Debug<Props> | null>
+        debug: React.MutableRefObject<Debug<Props> | null>,
+        mutations: Array<(state: State, prev: State) => State>
     ) =>
     (...params: any[]) => {
         const now = performance.now();
         const result = dispatch(...params);
-        const set = (newState: State) => setState((prev) => reduce(newState, prev));
+        const set = (newState: State) => setState((prev) => reduce(newState, prev, mutations));
         if (isPromise<State>(result)) {
             return result.then((resolved) => {
                 set(resolved);
@@ -76,29 +83,33 @@ const debugFunc =
         return;
     };
 
+type Mutators<State> = Array<(state: State, prev: State) => State>;
+
 const optimizedFunc =
     <State extends {}, Props extends object>(
         name: string,
         dispatch: (...args: any[]) => any,
         setState: React.Dispatch<SetStateAction<State>>,
         getProps: () => Props,
-        debug: React.MutableRefObject<Debug<Props> | null>
+        debug: React.MutableRefObject<Debug<Props> | null>,
+        mutations: Mutators<State>
     ) =>
     (...params: any[]) => {
         debug.current = { method: name, time: 0, props: getProps() };
         const result = dispatch(...params);
-        const set = (newState: State) => setState((prev) => reduce(newState, prev));
+        const set = (newState: State) => setState((prev) => reduce(newState, prev, mutations));
         if (isPromise<State>(result)) {
             return result.then((resolved) => set(resolved));
         }
         return set(result);
     };
 
-type Options<M, P, D, S> = Partial<{
+type Options<M, P, D, S, MM> = Partial<{
+    mutations: MM;
     middlewares: M;
     props: P;
     debug: D;
-    selector?: S;
+    selector: S;
 }>;
 
 export const useReducer = <
@@ -106,17 +117,19 @@ export const useReducer = <
     Reducers extends ReducerActions<State, Props>,
     Props extends object,
     Middlewares extends ReducerMiddleware<State, Props>,
+    Mutations extends Mutators<State>,
     UseDebug extends boolean
 >(
     initialState: State,
     reducer: Reducers,
-    options?: Options<Middlewares, Props, UseDebug, undefined>
+    options?: Options<Middlewares, Props, UseDebug, undefined, Mutations>
 ): UseReducer<State, State, Props, Reducers> => {
     const [state, setState] = useState<State>(() => initialState);
     const mutableState = useMutable(state);
     const mutableProps = useMutable(options?.props ?? ({} as Props));
     const mutableReducer = useMutable(reducer);
     const middleware = useMutable<Middlewares>(options?.middlewares ?? ([] as unknown as Middlewares));
+    const mutations = useMutable<Mutations>(options?.mutations ?? ([] as unknown as Mutations));
     const savedInitialState = useRef(initialState);
     const previous = usePrevious(state);
     const previousRef = useMutable(previous);
@@ -142,8 +155,8 @@ export const useReducer = <
             (acc, [name, dispatch]: any) => ({
                 ...acc,
                 [name]: options?.debug
-                    ? debugFunc(name, dispatch, setState, getProps, debug)
-                    : optimizedFunc(name, dispatch, setState, getProps, debug)
+                    ? debugFunc(name, dispatch, setState, getProps, debug, mutations.current)
+                    : optimizedFunc(name, dispatch, setState, getProps, debug, mutations.current)
             }),
             {} as MapReducerReturn<State, ReturnType<Reducers>>
         );
@@ -157,7 +170,7 @@ export const createGlobalReducer = <State extends {}, Reducers extends ReducerAc
 ): (<Selector extends (state: State) => any, Middlewares extends ReducerMiddleware<ReturnType<Selector>, {}>>(
     selector?: Selector,
     comparator?: (a: any, b: any) => boolean,
-    options?: Options<Middlewares, {}, {}, Selector>
+    options?: Options<Middlewares, {}, {}, Selector, []>
 ) => UseReducer<Selector extends (state: State) => State ? State : ReturnType<Selector>, State, {}, Reducers>) & {
     dispatchers: MapReducerReturn<State, ReturnType<Reducers>>;
 } => {
@@ -187,7 +200,7 @@ export const createGlobalReducer = <State extends {}, Reducers extends ReducerAc
             ...acc,
             [name]: (...args: any[]) => {
                 const result = fn(...args);
-                const set = (newState: State) => setState((prev) => reduce(newState, prev));
+                const set = (newState: State) => setState((prev) => reduce(newState, prev, []));
                 return isPromise<State>(result) ? result.then(set) : set(result);
             }
         }),
@@ -199,8 +212,8 @@ export const createGlobalReducer = <State extends {}, Reducers extends ReducerAc
     return Object.assign(
         function useStore<
             Selector extends (state: State) => any,
-            M extends ReducerMiddleware<ReturnType<Selector>, {}>
-        >(selector?: Selector, comparator = shallowCompare, options?: Options<M, {}, {}, Selector>) {
+            O extends Options<ReducerMiddleware<ReturnType<Selector>, {}>, {}, {}, Selector, []>
+        >(selector?: Selector, comparator = shallowCompare, options?: O) {
             const middleware = useMutable(options?.middlewares ?? []);
             const state = useSyncExternalStoreWithSelector(
                 addListener,
