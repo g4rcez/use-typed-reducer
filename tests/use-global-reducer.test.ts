@@ -38,4 +38,24 @@ describe("Should test createGlobalReducer", () => {
         expect(state.n).toBe(0);
         expect(dispatch).toStrictEqual(useStore.dispatchers);
     });
+
+    test("Should mutate global state", () => {
+        const useStore = createGlobalReducer(
+            { n: 0 },
+            (args) => ({
+                inc: () => ({ n: args.state().n + 1 })
+            }),
+            {
+                mutations: [(state) => ({ ...state, n: state.n + 1 })]
+            }
+        );
+        const { result } = renderHook(() => useStore());
+        const [state, dispatch] = result.current;
+        expect(state.n).toBe(0);
+        expect(dispatch).toStrictEqual(useStore.dispatchers);
+        act(() => {
+            dispatch.inc();
+        });
+        expect(result.current[0].n).toBe(2);
+    });
 });

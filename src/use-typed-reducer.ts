@@ -164,9 +164,14 @@ export const useReducer = <
     return [state, dispatchers] as const;
 };
 
-export const createGlobalReducer = <State extends {}, Reducers extends ReducerActions<State, {}>>(
+export const createGlobalReducer = <
+    State extends {},
+    Reducers extends ReducerActions<State, {}>,
+    Mutations extends Mutators<State>
+>(
     initialState: State,
-    reducer: Reducers
+    reducer: Reducers,
+    rootOptions?: Omit<Options<[], {}, {}, () => State, Mutations>, "middlewares">
 ): (<Selector extends (state: State) => any, Middlewares extends ReducerMiddleware<ReturnType<Selector>, {}>>(
     selector?: Selector,
     comparator?: (a: any, b: any) => boolean,
@@ -175,6 +180,7 @@ export const createGlobalReducer = <State extends {}, Reducers extends ReducerAc
     dispatchers: MapReducerReturn<State, ReturnType<Reducers>>;
 } => {
     let state = initialState;
+    const rootMutations = rootOptions?.mutations ?? [];
     const getSnapshot = () => state;
     const listeners = new Set<Listener<State>>();
     const addListener = (listener: Listener<State>) => {
@@ -188,19 +194,14 @@ export const createGlobalReducer = <State extends {}, Reducers extends ReducerAc
         listeners.forEach((exec) => exec(newState, previousState));
     };
 
-    const args = {
-        initialState,
-        props: {} as any,
-        state: getSnapshot,
-        previousState: getSnapshot
-    };
+    const debugOptions = { initialState, props: {} as any, state: getSnapshot, previousState: getSnapshot };
 
-    const dispatchers: MapReducerReturn<State, ReturnType<Reducers>> = entries(reducer(args)).reduce<any>(
+    const dispatchers: MapReducerReturn<State, ReturnType<Reducers>> = entries(reducer(debugOptions)).reduce<any>(
         (acc, [name, fn]: any) => ({
             ...acc,
             [name]: (...args: any[]) => {
                 const result = fn(...args);
-                const set = (newState: State) => setState((prev) => reduce(newState, prev, []));
+                const set = (newState: State) => setState((prev) => reduce(newState, prev, rootMutations));
                 return isPromise<State>(result) ? result.then(set) : set(result);
             }
         }),
@@ -212,7 +213,7 @@ export const createGlobalReducer = <State extends {}, Reducers extends ReducerAc
     return Object.assign(
         function useStore<
             Selector extends (state: State) => any,
-            O extends Options<ReducerMiddleware<ReturnType<Selector>, {}>, {}, {}, Selector, []>
+            O extends Omit<Options<ReducerMiddleware<ReturnType<Selector>, {}>, {}, {}, Selector, []>, "mutations">
         >(selector?: Selector, comparator = shallowCompare, options?: O) {
             const middleware = useMutable(options?.middlewares ?? []);
             const state = useSyncExternalStoreWithSelector(
