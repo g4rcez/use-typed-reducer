@@ -48,7 +48,7 @@ export type UseReducer<
     State extends {},
     Props extends {},
     Reducers extends ReducerActions<State, Props>
-> = readonly [state: Selector, dispatchers: MapReducerReturn<State, ReturnType<Reducers>>];
+> = readonly [state: Selector, dispatchers: MapReducerReturn<State, ReturnType<Reducers>>, props: Props];
 
 export type ReducerMiddleware<State extends object, Props extends object> = Array<
     (state: State, prev: State, debug: Debug<Props>) => State

@@ -42,7 +42,7 @@ describe("Should test useReducer", () => {
                     inc: () => ({ n: args.state().n + 1 })
                 }),
                 {
-                    mutations: [(state) => ({ n: state.n + 1 })]
+                    interceptor: [(state) => ({ n: state.n + 1 })]
                 }
             )
         );

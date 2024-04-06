@@ -7,19 +7,17 @@ export type StoragePluginManager = {
 export const createStoragePlugin =
     (storage: () => StoragePluginManager) =>
     (key: string) =>
-    <T>(state: T, _: T, debug: Debug) => {
-        if (!debug.selector) {
-            storage().set(key, JSON.stringify(state));
-        }
+    <T>(state: T, _: T) => {
+        storage().set(key, JSON.stringify(state));
         return state;
     };
 
 export const createLocalStoragePlugin = createStoragePlugin(() => ({
-    set: (k: string, v: any) => localStorage.setItem(k, v)
+    set: (k, v) => localStorage.setItem(k, v)
 }));
 
 export const createSessionStoragePlugin = createStoragePlugin(() => ({
-    set: (k: string, v: any) => sessionStorage.setItem(k, v)
+    set: (k, v) => sessionStorage.setItem(k, v)
 }));
 
 export const createLoggerPlugin =

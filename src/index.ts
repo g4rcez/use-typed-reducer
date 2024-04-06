@@ -1,7 +1,6 @@
 export type {
     Action,
     Callback,
-    Comparator,
     Debug,
     Dispatch,
     FnMap,

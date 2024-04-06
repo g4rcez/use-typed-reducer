@@ -17,7 +17,7 @@ describe("Should test createGlobalReducer", () => {
         }));
         const { result } = renderHook(() =>
             useStore(undefined, undefined, {
-                middlewares: [calls.fn]
+                postMiddleware: [calls.fn]
             })
         );
         const [state, dispatch] = result.current;
@@ -46,7 +46,7 @@ describe("Should test createGlobalReducer", () => {
                 inc: () => ({ n: args.state().n + 1 })
             }),
             {
-                mutations: [(state) => ({ ...state, n: state.n + 1 })]
+                interceptor: [(state) => ({ ...state, n: state.n + 1 })]
             }
         );
         const { result } = renderHook(() => useStore());
