@@ -33,4 +33,24 @@ describe("Should test useReducer", () => {
         rerender();
         expect(result.current[0].message).toBe("Sleep for 1000ms");
     });
+
+    test("Should mutate middleware", async () => {
+        const { result } = renderHook(() =>
+            useReducer(
+                { n: 0 },
+                (args) => ({
+                    inc: () => ({ n: args.state().n + 1 })
+                }),
+                {
+                    interceptor: [(state) => ({ n: state.n + 1 })]
+                }
+            )
+        );
+        const [state, dispatch] = result.current;
+        expect(state.n).toBe(0);
+        act(() => {
+            dispatch.inc();
+        });
+        expect(result.current[0].n).toBe(2);
+    });
 });

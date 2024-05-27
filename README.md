@@ -16,6 +16,10 @@ the [createGlobalReducer](#createglobalreducer) for global state.
     * [useReducerWithProps](#usereducerwithprops)
 * [useReducer](#usereducer)
 * [createGlobalReducer](#createglobalreducer)
+* [Middlewares](#middlewares)
+* [Tips and Tricks](#tips-and-tricks)
+    * [Save at LocalStorage](#save-at-localstorage)
+    * [State logger](#state-logger)
 
 <!-- TOC -->
 
@@ -50,7 +54,7 @@ dispatch. Dispatch has the same key and functions of given dictionary in `useTyp
 update state. This void `dispatch({ type: "ACTION" })`
 
 ```tsx
-import {useTypedReducer, UseReducer} from "./index";
+import { useTypedReducer, UseReducer } from "./index";
 
 const initialState = {
     numbers: 0,
@@ -66,12 +70,12 @@ type Reducers = {
 };
 
 const reducers: Reducers = {
-    increment: () => (state) => ({...state, numbers: state.numbers + 1}),
+    increment: () => (state) => ({ ...state, numbers: state.numbers + 1 }),
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.valueAsNumber
-        return (state) => ({...state, numbers: value})
+        return (state) => ({ ...state, numbers: value })
     },
-    reset: () => (state) => ({...state, numbers: 0})
+    reset: () => (state) => ({ ...state, numbers: 0 })
 };
 
 
@@ -93,9 +97,9 @@ const Component = () => {
 The same of useTypedReducer, but receive a `getProps` as second argument in the second function.
 
 ```typescript jsx
-import {useReducerWithProps, UseReducer} from "./index";
+import { useReducerWithProps, UseReducer } from "./index";
 
-const initialState = {numbers: 0, something: ""};
+const initialState = { numbers: 0, something: "" };
 
 type State = typeof initialState;
 
@@ -110,15 +114,15 @@ type Props = {
 }
 
 const reducers: Reducers = {
-    increment: () => (state) => ({...state, numbers: state.numbers + 1}),
+    increment: () => (state) => ({ ...state, numbers: state.numbers + 1 }),
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.valueAsNumber;
         return (state, props) => {
             const find = props.list.find(x => x === value);
-            return find === undefined ? ({...state, numbers: value}) : ({...state, numbers: find * 2});
+            return find === undefined ? ({ ...state, numbers: value }) : ({ ...state, numbers: find * 2 });
         };
     },
-    reset: () => (state) => ({...state, numbers: 0})
+    reset: () => (state) => ({ ...state, numbers: 0 })
 };
 
 
@@ -143,9 +147,9 @@ state.
 
 ```typescript
 export const useMath = () => {
-    return useReducer({count: 0}, (getState) => ({
-        sum: (n: number) => ({count: n + getState().count}),
-        diff: (n: number) => ({count: n - getState().count})
+    return useReducer({ count: 0 }, (getState) => ({
+        sum: (n: number) => ({ count: n + getState().count }),
+        diff: (n: number) => ({ count: n - getState().count })
     }));
 };
 ```
@@ -156,9 +160,9 @@ If you need a way to create a global state, you can use this function. This enab
 a Context provider. The API is the same API of `useReducer`, but returns a hook to use the global context.
 
 ```typescript jsx
-const useStore = createGlobalReducer({count: 0}, (arg) => ({
-    increment: () => ({count: arg.state().count + 1}),
-    decrement: () => ({count: arg.state().count - 1}),
+const useStore = createGlobalReducer({ count: 0 }, (arg) => ({
+    increment: () => ({ count: arg.state().count + 1 }),
+    decrement: () => ({ count: arg.state().count - 1 }),
 }));
 
 export default function App() {
@@ -177,9 +181,9 @@ You can pass a selector to `useStore` to get only the part of state that you nee
 render, doing the re-render only when the selector get a different value from the previous state.
 
 ```typescript jsx
-const useStore = createGlobalReducer({count: 0}, (arg) => ({
-    increment: () => ({count: arg.state().count + 1}),
-    decrement: () => ({count: arg.state().count - 1}),
+const useStore = createGlobalReducer({ count: 0 }, (arg) => ({
+    increment: () => ({ count: arg.state().count + 1 }),
+    decrement: () => ({ count: arg.state().count - 1 }),
 }));
 
 export default function App() {
@@ -194,6 +198,47 @@ export default function App() {
 }
 ```
 
+# Middlewares
+
+There are two types of middleware in use-typed-reducer
+
+- `interceptors`: that can mutate the state and executes immediately after your function
+- `postMiddleware`: execute after useTypedReducer updates the state, like a `useEffect(fn, [state])`
+
+## Using interceptors
+
+```typescript
+type State = { filter: string; };
+const [state, dispatch] = useReducer({ filter: "" }, () => {
+    setFilter: (f: string) => ({ filter: f });
+}, {
+    interceptors: [
+        (state: State, prev: State) => {
+            console.log(prev, state);
+            return state;
+        },
+    ],
+});
+```
+
+## Why use interceptors?
+
+Interceptors are great when you need to execute functions that use previous and current state in the same shoot. You can
+use interceptors to create a history of your state. Saving the previous state plus your current state, making a timeline
+of user actions.
+
+## Using postMiddleware
+
+While interceptors are good to execute actions during the state update, postMiddleware are great to update your state
+after the
+dispatch of newer state. This is useful to update other states from your middleware.
+
+## Why interceptors and postMiddleware are necessary?
+
+If you try to update external states using `interceptors`, maybe you will have a React warning about update state from
+an useState. Because of this you will need to move your update logic from `interceptors` to `postMiddleware`, that acts
+like useEffect
+
 # Tips and Tricks
 
 You need to store your state at LocalStorage? Do you need a logger for each change in state? Okay, let's go
@@ -202,16 +247,16 @@ You need to store your state at LocalStorage? Do you need a logger for each chan
 
 ````typescript
 import * as React from "react";
-import {useReducer} from "use-typed-reducer"
+import { useReducer } from "use-typed-reducer"
 
 const App = () => {
     const [state, dispatch] = useReducer(
-        {name: "", topics: [] as string []},
+        { name: "", topics: [] as string [] },
         (get) => ({
             onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                 const value = e.target.value;
                 const name = e.target.name;
-                return {...get.state(), [name]: value}
+                return { ...get.state(), [name]: value }
             }
         }),
         undefined, // no props used,
@@ -232,16 +277,16 @@ Maybe you miss the `redux-logger` behaviour. I you help you to recovery this beh
 
 ````typescript
 import * as React from "react";
-import {useReducer} from "use-typed-reducer"
+import { useReducer } from "use-typed-reducer"
 
 const App = () => {
     const [state, dispatch] = useReducer(
-        {name: "", topics: [] as string []},
+        { name: "", topics: [] as string [] },
         (get) => ({
             onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
                 const value = e.target.value;
                 const name = e.target.name;
-                return {...get.state(), [name]: value}
+                return { ...get.state(), [name]: value }
             }
         }),
         undefined, // no props used,

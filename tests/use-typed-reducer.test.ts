@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, test } from "vitest";
-import useReducer from "../src";
+import { useLegacyReducer as useReducer } from "../src";
 
 type State = { name: string };
 
