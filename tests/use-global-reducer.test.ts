@@ -52,6 +52,7 @@ describe("Should test createGlobalReducer", () => {
         const { result } = renderHook(() => useStore());
         const [state, dispatch] = result.current;
         expect(state.n).toBe(0);
+        expect(useStore.getState()).toStrictEqual({ n: 0 });
         expect(dispatch).toStrictEqual(useStore.dispatchers);
         act(() => {
             dispatch.inc();

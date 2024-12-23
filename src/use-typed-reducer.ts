@@ -179,6 +179,7 @@ export const createGlobalReducer = <
     options?: Options<Middlewares, {}, {}, Selector, []>
 ) => UseReducer<Selector extends (state: State) => State ? State : ReturnType<Selector>, State, {}, Reducers>) & {
     dispatchers: MapReducerReturn<State, ReturnType<Reducers>>;
+    getState: () => State
 } => {
     let state = initialState;
     const rootMutations = rootOptions?.interceptor ?? [];
@@ -241,6 +242,6 @@ export const createGlobalReducer = <
             }, [state, previous, middleware]);
             return [state, dispatchers, {}] as const;
         },
-        { dispatchers }
+        { dispatchers, getState: () => state }
     );
 };
