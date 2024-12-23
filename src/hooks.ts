@@ -7,7 +7,7 @@ export const useMutable = <T extends {}>(state: T): MutableRefObject<T> => {
 };
 
 export const usePrevious = <V>(value: V): V => {
-    const ref = useRef<V>();
+    const ref = useRef<V>(undefined);
     useEffect(() => {
         ref.current = value;
     }, [value]);
