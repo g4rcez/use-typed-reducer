@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "outDir": "build",
+        "outDir": "./dist",
         "module": "ESNext",
         "alwaysStrict": true,
         "declarationDir": "./dist",
@@ -22,7 +22,6 @@
         "strictNullChecks": true,
         "incremental": true,
         "strictFunctionTypes": true,
-        "suppressImplicitAnyIndexErrors": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "lib": [
@@ -30,12 +29,5 @@
             "esnext"
         ]
     },
-    "include": ["src"],
-    "exclude": [
-        "node_modules",
-        "build",
-        "dist",
-        "example",
-        "rollup.config.js"
-    ]
+    "include": ["src"]
 }
