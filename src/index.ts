@@ -25,3 +25,4 @@ export {
     createStoragePlugin,
     type StoragePluginManager
 } from "./plugins";
+export { Store } from "./use-class-state";
